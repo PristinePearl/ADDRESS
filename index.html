@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pristine Pearl – Address Printer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--pri:#0b5c8a;--bg:#eef2f6;--bd:#cfd8e3}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:#1c2733}
+.ui{display:grid;grid-template-columns:minmax(380px,44%) 1fr;gap:12px;padding:12px;height:100vh}
+.panel{background:#fff;border:1px solid var(--bd);border-radius:8px;display:flex;flex-direction:column;min-height:0}
+.panel h2{margin:0;padding:10px 14px;font-size:15px;background:var(--pri);color:#fff;border-radius:8px 8px 0 0}
+.bar{padding:8px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-bottom:1px solid var(--bd)}
+.bar label{font-size:12.5px;display:flex;align-items:center;gap:4px}
+input[type=text],input[type=number],select{padding:6px 8px;border:1px solid var(--bd);border-radius:5px;font-size:13px}
+input[type=text]{flex:1;min-width:120px}
+button{padding:7px 12px;border:0;border-radius:5px;background:var(--pri);color:#fff;font-size:13px;cursor:pointer}
+button.sec{background:#e3eaf1;color:#1c2733}
+button.big{background:#0a8a4a;font-weight:600;padding:9px 18px}
+.tbl{overflow:auto;flex:1}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{position:sticky;top:0;background:#f3f6f9;text-align:left;padding:6px;border-bottom:1px solid var(--bd)}
+td{padding:5px 6px;border-bottom:1px solid #edf1f5;vertical-align:top}
+tr:hover td{background:#f7fafd}
+td.ad{max-width:230px;color:#55636f}
+.status{font-size:12px;color:#55636f;padding:6px 12px}
+#preview{overflow:auto;padding:12px;flex:1;background:#8a96a3;border-radius:0 0 8px 8px}
+.page{background:#fff;margin:0 auto 14px;box-shadow:0 2px 8px #0005;zoom:.62;overflow:hidden;page-break-after:always;position:relative}
+.page:last-child{page-break-after:auto}
+/* Labels */
+.lp{width:210mm;height:296.6mm;padding:5mm;display:grid;grid-template-columns:1fr 1fr}
+.lbl{border:1px dashed #777;padding:3.5mm;display:flex;flex-direction:column;overflow:hidden;font-size:var(--fs,10pt);line-height:1.25}
+.lbl.empty{border-color:#ddd}
+.nocut .lbl{border-color:transparent}
+.note{margin-top:1mm;font-size:.85em;font-style:italic}
+details{padding:8px 12px;border-bottom:1px solid var(--bd);font-size:12.5px}
+summary{cursor:pointer;font-weight:600;color:var(--pri)}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.g input,.g textarea{width:100%;padding:6px;border:1px solid var(--bd);border-radius:5px;font:inherit}
+.g .w{grid-column:1/-1}
+tr.on td{background:#e8f3fb}
+.to{flex:1;display:flex;gap:3mm;min-height:0}
+.t{flex:1;min-width:0}
+.t .k{font-size:.8em;font-weight:700;letter-spacing:.5px}
+.t .n{font-weight:700;font-size:1.12em;margin:.5mm 0 1mm}
+.t .a{word-break:break-word}
+.cs{margin-top:1mm;font-weight:600}
+.t .p{font-weight:700;margin-top:1mm}
+.t .ph{margin-top:.5mm}
+.qrw{width:27mm;flex:none;text-align:center}
+.qr{width:100%;aspect-ratio:1}
+.cap{font-size:6.5pt;line-height:1.1;font-weight:600;margin-top:.5mm}
+.qr img,.qr canvas{width:100%!important;height:100%!important}
+.qr svg{width:100%;height:100%;display:block;shape-rendering:crispEdges}
+.frm{border-top:1px solid #000;margin-top:2mm;padding-top:1.5mm;font-size:.66em;line-height:1.25}
+.frm b{font-size:1.05em}
+/* Envelope */
+.ep .from{position:absolute;left:8mm;top:7mm;font-size:8.5pt;line-height:1.3;max-width:48%}
+.ep .from b{font-size:9pt}
+.ep .toE{position:absolute;left:12%;top:26%;right:44mm;font-size:calc(12.5pt*var(--z,1));line-height:1.3}
+.ep .toE .k{font-weight:700;font-size:.8em}
+.ep .toE .n{font-weight:700;font-size:1.12em;margin:1mm 0 1.5mm}
+.ep .toE .p{font-weight:700;margin-top:1.5mm}
+.ep .qrw{position:absolute;right:8mm;bottom:6mm;width:30mm}.ep .cap{font-size:7pt}
+@media print{
+ body{background:#fff}
+ .ui{display:block;padding:0;height:auto}
+ .ui .panel:first-child{display:none}
+ .ui .panel:last-child{border:0}
+ .panel h2,.status,.bar,details{display:none!important}
+ #preview{padding:0;overflow:visible;background:#fff}
+ .page{zoom:1;margin:0;box-shadow:none}
+}
+</style>
+<style id="pg"></style>
+</head>
+<body>
+<div class="ui">
+ <div class="panel">
+  <h2>Address Printer – Customer Master</h2>
+  <div class="bar">
+   <input type="text" id="q" placeholder="Search name / code / pincode / address…">
+   <button class="sec" id="selAll">Select shown</button>
+   <button class="sec" id="clr">Clear</button>
+  </div>
+  <div class="bar">
+   <button class="sec" id="reload">↻ Reload sheet</button>
+   <label>Upload (.xlsx/.csv) <input type="file" id="file" accept=".xlsx,.xls,.csv"></label>
+  </div>
+  <div class="bar">
+   <label><input type="checkbox" id="onlySel"> Selected only</label>
+   <label><input type="checkbox" id="noDup"> Hide duplicates</label>
+  </div>
+  <details><summary>➕ Add party manually</summary>
+   <div class="g">
+    <input class="w" id="mn" placeholder="Party name">
+    <textarea class="w" id="ma" rows="2" placeholder="Address"></textarea>
+    <input id="mp" placeholder="Pincode"><input id="mph" placeholder="Phone">
+    <input id="mm" placeholder="Mobile"><button id="addP">Add &amp; select</button>
+   </div>
+  </details>
+  <div class="status" id="status">Loading…</div>
+  <div class="tbl"><table><thead><tr><th></th><th>Code</th><th>Party</th><th>Address</th><th>PIN</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+ </div>
+ <div class="panel">
+  <h2>Print Setup</h2>
+  <div class="bar">
+   <label>Type
+    <select id="mode">
+     <option value="L8">Label – 8 per A4</option>
+     <option value="L6">Label – 6 per A4</option>
+     <option value="E">Envelope</option>
+    </select></label>
+   <label id="envw" style="display:none">Size
+    <select id="esz">
+     <option value="220,110">DL 220×110 mm</option>
+     <option value="229,102">9×4 in</option>
+     <option value="241,105">#10 (9.5×4.1 in)</option>
+     <option value="229,162">C5 229×162 mm</option>
+    </select></label>
+   <label>Copies <input type="number" id="cp" value="1" min="1" max="20" style="width:55px"></label>
+   <label>QR
+    <select id="qt">
+     <option value="from">FROM details text</option>
+     <option value="none">No QR</option>
+    </select></label>
+   <button class="sec" id="locate" title="View FROM address in Google Maps">📍 Locate FROM</button>
+   <button class="big" id="print">🖨 Print</button>
+  </div>
+  <div class="bar">
+   <label>Start at label # <input type="number" id="start" value="1" min="1" max="8" style="width:55px"></label>
+   <label>Sort <select id="sortby"><option value="sheet">Sheet order</option><option value="name">Party name</option><option value="pin">Pincode</option></select></label>
+   <label>Text <select id="fz"><option value="0.85">Small</option><option value="1" selected>Normal</option><option value="1.15">Large</option></select></label>
+   <label><input type="checkbox" id="cut" checked> Cut lines</label>
+   <input type="text" id="note" placeholder="Extra line on every label (e.g. Ref: INV-1024 / Fragile)">
+  </div>
+  <details><summary>✏️ Sender (FROM) details – used in QR &amp; Locate</summary>
+   <div class="g">
+    <input class="w" id="fn" placeholder="Name">
+    <textarea class="w" id="fa" rows="3" placeholder="Address (one line per row; last line: CITY - PINCODE)"></textarea>
+    <input id="fm" placeholder="Mobile"><input id="fe" placeholder="Mail">
+   </div>
+  </details>
+  <div class="status" id="cnt">0 selected</div>
+  <div id="preview"></div>
+ </div>
+</div>
+
+<script>
+const SHEET_ID='1BgTwSgEe2uyqOj9aD-wYf1wuwLHmbUF5KrE1JvHU98w', GID=0;
+const FROM={
+ name:'PRISTINE PEARL PHARMA PVT LTD',
+ addr:['SECOND FLOOR - 2B, DOOR NO: 129, THOTTASALAI EAST,','POWER HOUSE ROAD, PERUR VILLAGE,','COIMBATORE - 641002'],
+ mobile:'+91 9361136329', mail:'distribution@pristinepearl.com'
+};
+let data=[], sel=new Set(), shown=[];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function parseCSV(t){
+ const r=[];let row=[],c='',q=false;
+ for(let i=0;i<t.length;i++){const ch=t[i];
+  if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+  else if(ch=='"')q=true;
+  else if(ch==','){row.push(c);c=''}
+  else if(ch=='\n'){row.push(c);r.push(row);row=[];c=''}
+  else if(ch!='\r')c+=ch;
+ }
+ if(c||row.length){row.push(c);r.push(row)}
+ return r;
+}
+function ingest(rows){
+ const h=(rows[0]||[]).map(x=>String(x||'').trim().toUpperCase());
+ const ix=n=>h.indexOf(n);
+ const I={code:ix('CODE'),name:ix('PARTY NAME'),addr:ix('ADDRESS'),pin:ix('PINCODE'),ph:ix('PHONE'),mob:ix('MOBILE')};
+ if(I.name<0||I.addr<0){$('status').textContent='Header mismatch: need CODE, PARTY NAME, ADDRESS, PINCODE, PHONE, MOBILE';return}
+ const g=(r,i)=>i<0?'':String(r[i]??'').trim();
+ data=rows.slice(1).map(r=>({code:g(r,I.code),name:g(r,I.name),addr:g(r,I.addr),pin:g(r,I.pin),ph:g(r,I.ph),mob:g(r,I.mob)})).filter(d=>d.name);
+ sel.clear();renderTable();render();
+}
+async function loadSheet(){
+ $('status').textContent='Loading sheet…';
+ try{
+  const res=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`);
+  if(!res.ok)throw 0;
+  ingest(parseCSV(await res.text()));
+ }catch(e){$('status').textContent='Could not load sheet (needs "Anyone with link" access). Use Upload instead.'}
+}
+$('file').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ if(/\.csv$/i.test(f.name))ingest(parseCSV(await f.text()));
+ else{const wb=XLSX.read(await f.arrayBuffer());ingest(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}))}
+};
+function renderTable(){
+ const q=$('q').value.trim().toLowerCase(), only=$('onlySel').checked, nd=$('noDup').checked, seen=new Set();
+ shown=data.map((d,i)=>[d,i]).filter(([d,i])=>{
+  if(only&&!sel.has(i))return false;
+  if(q&&!(d.name+' '+d.code+' '+d.pin+' '+d.addr).toLowerCase().includes(q))return false;
+  if(nd){const k=(d.name+d.addr).toUpperCase().replace(/\W/g,'');if(seen.has(k))return false;seen.add(k)}
+  return true});
+ $('tb').innerHTML=shown.map(([d,i])=>`<tr class="${sel.has(i)?'on':''}"><td><input type="checkbox" data-i="${i}" ${sel.has(i)?'checked':''}></td><td>${esc(d.code)}</td><td>${esc(d.name)}</td><td class="ad">${esc(d.addr)}</td><td>${esc(d.pin)}</td><td><button class="sec loc" data-i="${i}" title="Locate TO address">📍</button></td></tr>`).join('');
+ $('status').textContent=`${shown.length} of ${data.length} parties`;
+}
+$('tb').onchange=e=>{const i=+e.target.dataset.i;e.target.checked?sel.add(i):sel.delete(i);e.target.closest('tr').classList.toggle('on',e.target.checked);render()};
+$('tb').addEventListener('click',e=>{if(e.target.closest('button,input'))return;const tr=e.target.closest('tr');if(!tr)return;const cb=tr.querySelector('input');cb.checked=!cb.checked;cb.dispatchEvent(new Event('change',{bubbles:true}))});
+['onlySel','noDup'].forEach(id=>$(id).onchange=renderTable);
+$('addP').onclick=()=>{const g=id=>$(id).value.trim();if(!g('mn')||!g('ma')){alert('Party name & address required');return}
+ data.push({code:'MANUAL',name:g('mn').toUpperCase(),addr:g('ma').toUpperCase(),pin:g('mp'),ph:g('mph'),mob:g('mm')});
+ sel.add(data.length-1);['mn','ma','mp','mph','mm'].forEach(id=>$(id).value='');renderTable();render()};
+$('q').oninput=renderTable;
+$('selAll').onclick=()=>{shown.forEach(([,i])=>sel.add(i));renderTable();render()};
+$('clr').onclick=()=>{sel.clear();renderTable();render()};
+$('reload').onclick=loadSheet;
+$('locate').onclick=()=>window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(FROM.name+', '+FROM.addr.join(' ')),'_blank');
+$('tb').onclick=e=>{const b=e.target.closest('.loc');if(!b)return;const d=data[+b.dataset.i];window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.name+', '+d.addr+' '+d.pin),'_blank')};
+const SET=['mode','esz','cp','qt','start','sortby','fz','cut','note'];
+SET.forEach(id=>{$(id).onchange=render;$(id).oninput=render});
+function saveSet(){try{const o={};SET.forEach(id=>o[id]=$(id).type=='checkbox'?$(id).checked:$(id).value);o.from=FROM;localStorage.setItem('ap_set',JSON.stringify(o))}catch(e){}}
+function loadSet(){try{const o=JSON.parse(localStorage.getItem('ap_set')||'{}');SET.forEach(id=>{if(o[id]!==undefined){$(id).type=='checkbox'?$(id).checked=o[id]:$(id).value=o[id]}});if(o.from)Object.assign(FROM,o.from)}catch(e){}
+ $('fn').value=FROM.name;$('fa').value=FROM.addr.join('\n');$('fm').value=FROM.mobile;$('fe').value=FROM.mail}
+['fn','fa','fm','fe'].forEach(id=>$(id).oninput=()=>{FROM.name=$('fn').value.trim();FROM.addr=$('fa').value.split('\n').map(x=>x.trim()).filter(Boolean);FROM.mobile=$('fm').value.trim();FROM.mail=$('fe').value.trim();render()});
+
+
+/* PINCODE -> City / State (India Post API), cached */
+let pinCache={};const pinTried=new Set();
+try{pinCache=JSON.parse(localStorage.getItem('pinCache')||'{}')}catch(e){}
+async function lookupPin(pin){
+ try{
+  const r=await fetch('https://api.postalpincode.in/pincode/'+pin);
+  const j=await r.json(), po=j&&j[0]&&j[0].PostOffice;
+  if(po&&po.length){pinCache[pin]={city:(po[0].District||po[0].Division||'').toUpperCase(),state:(po[0].State||'').toUpperCase()};
+   try{localStorage.setItem('pinCache',JSON.stringify(pinCache))}catch(e){}}
+ }catch(e){}
+}
+function ensurePins(items){
+ const need=[...new Set(items.map(d=>d.pin))].filter(x=>/^\d{6}$/.test(x)&&!pinCache[x]&&!pinTried.has(x));
+ if(!need.length)return Promise.resolve(false);
+ need.forEach(x=>pinTried.add(x));
+ $('cnt').textContent+=' – fetching city/state…';
+ return Promise.all(need.map(lookupPin)).then(()=>{render();return true});
+}
+const csLine=d=>{
+ if(!d.pin)return '';
+ const c=pinCache[d.pin];
+ return `<div class="cs">CITY : ${esc(c?c.city:'—')} | STATE : ${esc(c?c.state:'—')}</div>`;
+};
+
+function phones(d){return [d.ph&&'Ph: '+d.ph,d.mob&&'Mob: '+d.mob].filter(Boolean).join(' | ')}
+function qrText(d){
+ const e=x=>x.replace(/,/g,'\\,'), L=FROM.addr.slice(), last=L.pop()||'';
+ const m=last.match(/^(.*?)[\s,-]*(\d{6})\s*$/), city=m?m[1]:last, zip=m?m[2]:'';
+ return ['BEGIN:VCARD','VERSION:3.0','N:;;;;','FN:'+FROM.name,'ORG:'+FROM.name,
+  'TEL;TYPE=CELL:'+FROM.mobile.replace(/\s/g,''),'EMAIL:'+FROM.mail,
+  'ADR;TYPE=WORK:;;'+e(L.join(' ').replace(/,\s*$/,''))+';'+e(city)+';;'+zip+';','END:VCARD'].join('\n');
+}
+const qrBox=d=>$('qt').value=='none'?'':`<div class="qrw"><div class="qr" data-q="${esc(qrText(d))}"></div><div class="cap">Scan to view sender details</div></div>`;
+const fromBlock=()=>`<b>FROM : ${FROM.name}</b><br>${FROM.addr.map(esc).join('<br>')}<br>MOBILE - ${FROM.mobile} &nbsp;|&nbsp; MAIL - ${FROM.mail}`;
+
+function render(){
+ const mode=$('mode').value, cp=Math.max(1,+$('cp').value||1), z=$('fz').value, note=$('note').value.trim();
+ $('envw').style.display=mode=='E'?'':'none';
+ let idx=[...sel].sort((a,b)=>a-b); const sb=$('sortby').value;
+ if(sb=='name')idx.sort((a,b)=>data[a].name.localeCompare(data[b].name));
+ if(sb=='pin')idx.sort((a,b)=>String(data[a].pin).localeCompare(String(data[b].pin)));
+ const items=[];idx.forEach(i=>{for(let k=0;k<cp;k++)items.push(data[i])});
+ const n=mode=='L8'?8:6, st=mode=='E'?0:Math.min(n-1,Math.max(0,(+$('start').value||1)-1));
+ for(let k=0;k<st;k++)items.unshift(null);
+ const pages=mode=='E'?items.length:Math.ceil(items.length/n);
+ $('cnt').textContent=`${sel.size} selected → ${items.length-st} ${mode=='E'?'envelope(s)':'label(s)'} · ${pages} page(s)`;
+ const nt=note?`<div class="note">${esc(note)}</div>`:'';
+ ensurePins(items);
+ let html='';
+ if(mode=='E'){
+  const [w,h]=$('esz').value.split(',').map(Number);
+  $('pg').textContent=`@page{size:${w}mm ${h}mm;margin:0}`;
+  html=items.map(d=>`<div class="page ep" style="width:${w}mm;height:${h-.4}mm;--z:${z}">
+   <div class="toE"><div class="k">TO,</div><div class="n">${esc(d.name)}</div><div>${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div>${esc(phones(d))}</div>${nt}</div>
+   ${qrBox(d)}</div>`).join('');
+ }else{
+  $('pg').textContent='@page{size:A4 portrait;margin:0}';
+  const rows=n/2, fs=(mode=='L8'?10.5:12.5)*z+'pt', cls=$('cut').checked?'':' nocut';
+  for(let s=0;s<items.length;s+=n){
+   let cells=items.slice(s,s+n).map(d=>d?`<div class="lbl"><div class="to"><div class="t"><div class="k">TO,</div><div class="n">${esc(d.name)}</div><div class="a">${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div class="ph">${esc(phones(d))}</div>${nt}</div>${qrBox(d)}</div></div>`:'<div class="lbl empty"></div>');
+   while(cells.length<n)cells.push('<div class="lbl empty"></div>');
+   html+=`<div class="page lp${cls}" style="grid-template-rows:repeat(${rows},1fr);--fs:${fs}">${cells.join('')}</div>`;
+  }
+ }
+ $('preview').innerHTML=html||'<p style="color:#fff">Select parties from the list.</p>';
+ document.querySelectorAll('.qr[data-q]').forEach(el=>{
+  try{const qr=qrcode(0,'M');qr.addData(el.dataset.q.replace(/\n/g,'\r\n'));qr.make();
+   el.innerHTML=qr.createSvgTag({cellSize:4,margin:4,scalable:true});}
+  catch(e){el.textContent='QR err'}
+ });
+ saveSet();
+}
+$('print').onclick=async()=>{if(!sel.size){alert('Select at least one party');return}await ensurePins([...sel].map(i=>data[i]));render();setTimeout(()=>window.print(),300)};
+loadSet();loadSheet();render();
+</script>
+</body>
+</html>
