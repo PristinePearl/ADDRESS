@@ -55,6 +55,14 @@ tr.on td{background:#e8f3fb}
 .cap{font-size:6.5pt;line-height:1.1;font-weight:600;margin-top:.5mm}
 .qr img,.qr canvas{width:100%!important;height:100%!important}
 .qr svg{width:100%;height:100%;display:block;shape-rendering:crispEdges}
+.gm{display:flex;justify-content:space-between;gap:4mm;border:1px solid #000;padding:1mm 2mm;margin-top:1.5mm;font-weight:700;font-size:1.05em}
+.gm span{white-space:nowrap}
+.gm span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.gm span:last-child{flex:none}
+.gh{border:2px solid #000;text-align:center;font-weight:800;letter-spacing:2px;font-size:1.2em;padding:1mm 0;margin-bottom:2mm}
+.lp.land{width:297mm;height:209.6mm}
+.gl .t{flex:1}
+.gl .frm{font-size:.78em}
 .frm{border-top:1px solid #000;margin-top:2mm;padding-top:1.5mm;font-size:.66em;line-height:1.25}
 .frm b{font-size:1.05em}
 /* Envelope */
@@ -90,6 +98,23 @@ tr.on td{background:#e8f3fb}
    <button class="sec" id="reload">↻ Reload sheet</button>
    <label>Upload (.xlsx/.csv) <input type="file" id="file" accept=".xlsx,.xls,.csv"></label>
   </div>
+  <details open><summary>📦 Dispatch list – Inv / Code / Boxes</summary>
+   <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <button class="sec" id="tpl">⬇ Download template</button>
+    <label>Upload filled template <input type="file" id="dfile" accept=".xlsx,.xls,.csv"></label>
+    <button class="sec" id="dclr">✕ Clear list</button>
+   </div>
+   <div style="margin-top:8px;font-weight:600">✍ Manual entry</div>
+   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;align-items:center">
+    <input type="text" id="mcode" list="codelist" placeholder="Party code / name" style="min-width:170px">
+    <input type="text" id="minv" placeholder="Inv No." style="min-width:90px;max-width:120px">
+    <input type="number" id="mbox" value="1" min="1" max="99" title="No. of boxes" style="width:60px">
+    <button id="madd">＋ Add</button>
+   </div>
+   <datalist id="codelist"></datalist>
+   <div class="status" id="upmsg" style="white-space:pre-wrap;padding:6px 0 0">Upload columns: Inv No. | Date | Customer Name | Code | Taxable Amt | No. of boxes. Parties are picked by Code; each row prints one address label per box. You can also add entries manually above and edit Inv No. / Box below.</div>
+   <div id="ent" style="max-height:210px;overflow:auto;margin-top:6px"></div>
+  </details>
   <div class="bar">
    <label><input type="checkbox" id="onlySel"> Selected only</label>
    <label><input type="checkbox" id="noDup"> Hide duplicates</label>
@@ -99,7 +124,7 @@ tr.on td{background:#e8f3fb}
     <input class="w" id="mn" placeholder="Party name">
     <textarea class="w" id="ma" rows="2" placeholder="Address"></textarea>
     <input id="mp" placeholder="Pincode"><input id="mph" placeholder="Phone">
-    <input id="mm" placeholder="Mobile"><button id="addP">Add &amp; select</button>
+    <input id="mm" placeholder="Mobile"><input id="mi" placeholder="Inv No. (optional)"><input id="mb" type="number" min="1" max="99" placeholder="Boxes (optional)"><button class="w" id="addP">Add &amp; select</button>
    </div>
   </details>
   <div class="status" id="status">Loading…</div>
@@ -112,6 +137,7 @@ tr.on td{background:#e8f3fb}
     <select id="mode">
      <option value="L8">Label – 8 per A4</option>
      <option value="L6">Label – 6 per A4</option>
+     <option value="G">Label – GLASS WITH CARE (4 per A4 landscape)</option>
      <option value="E">Envelope</option>
     </select></label>
    <label id="envw" style="display:none">Size
@@ -135,6 +161,7 @@ tr.on td{background:#e8f3fb}
    <label>Sort <select id="sortby"><option value="sheet">Sheet order</option><option value="name">Party name</option><option value="pin">Pincode</option></select></label>
    <label>Text <select id="fz"><option value="0.85">Small</option><option value="1" selected>Normal</option><option value="1.15">Large</option></select></label>
    <label><input type="checkbox" id="cut" checked> Cut lines</label>
+   <label><input type="checkbox" id="showinv" checked> Inv No. &amp; Box x/n on label</label>
    <input type="text" id="note" placeholder="Extra line on every label (e.g. Ref: INV-1024 / Fragile)">
   </div>
   <details><summary>✏️ Sender (FROM) details – used in QR &amp; Locate</summary>
@@ -156,7 +183,7 @@ const FROM={
  addr:['SECOND FLOOR - 2B, DOOR NO: 129, THOTTASALAI EAST,','POWER HOUSE ROAD, PERUR VILLAGE,','COIMBATORE - 641002'],
  mobile:'+91 9361136329', mail:'distribution@pristinepearl.com'
 };
-let data=[], sel=new Set(), shown=[];
+let data=[], sel=new Set(), shown=[], queue=[], useList=false, skipEnt=false;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -179,7 +206,7 @@ function ingest(rows){
  if(I.name<0||I.addr<0){$('status').textContent='Header mismatch: need CODE, PARTY NAME, ADDRESS, PINCODE, PHONE, MOBILE';return}
  const g=(r,i)=>i<0?'':String(r[i]??'').trim();
  data=rows.slice(1).map(r=>({code:g(r,I.code),name:g(r,I.name),addr:g(r,I.addr),pin:g(r,I.pin),ph:g(r,I.ph),mob:g(r,I.mob)})).filter(d=>d.name);
- sel.clear();renderTable();render();
+ sel.clear();queue=[];useList=false;buildList();renderTable();render();
 }
 async function loadSheet(){
  $('status').textContent='Loading sheet…';
@@ -209,20 +236,112 @@ $('tb').addEventListener('click',e=>{if(e.target.closest('button,input'))return;
 ['onlySel','noDup'].forEach(id=>$(id).onchange=renderTable);
 $('addP').onclick=()=>{const g=id=>$(id).value.trim();if(!g('mn')||!g('ma')){alert('Party name & address required');return}
  data.push({code:'MANUAL',name:g('mn').toUpperCase(),addr:g('ma').toUpperCase(),pin:g('mp'),ph:g('mph'),mob:g('mm')});
- sel.add(data.length-1);['mn','ma','mp','mph','mm'].forEach(id=>$(id).value='');renderTable();render()};
+ const mi=g('mi'),mb=parseInt($('mb').value,10);
+ sel.add(data.length-1);
+ if(mi||mb>=1){if(!useList){useList=true;queue=[]}queue.push({i:data.length-1,inv:mi,date:'',boxes:Math.min(99,mb>=1?mb:1)})}
+ ['mn','ma','mp','mph','mm','mi','mb'].forEach(id=>$(id).value='');buildList();renderTable();render()};
 $('q').oninput=renderTable;
 $('selAll').onclick=()=>{shown.forEach(([,i])=>sel.add(i));renderTable();render()};
-$('clr').onclick=()=>{sel.clear();renderTable();render()};
+$('clr').onclick=()=>{sel.clear();queue=[];useList=false;renderTable();render()};
 $('reload').onclick=loadSheet;
 $('locate').onclick=()=>window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(FROM.name+', '+FROM.addr.join(' ')),'_blank');
 $('tb').onclick=e=>{const b=e.target.closest('.loc');if(!b)return;const d=data[+b.dataset.i];window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.name+', '+d.addr+' '+d.pin),'_blank')};
-const SET=['mode','esz','cp','qt','start','sortby','fz','cut','note'];
+const SET=['mode','esz','cp','qt','start','sortby','fz','cut','showinv','note'];
 SET.forEach(id=>{$(id).onchange=render;$(id).oninput=render});
 function saveSet(){try{const o={};SET.forEach(id=>o[id]=$(id).type=='checkbox'?$(id).checked:$(id).value);o.from=FROM;localStorage.setItem('ap_set',JSON.stringify(o))}catch(e){}}
 function loadSet(){try{const o=JSON.parse(localStorage.getItem('ap_set')||'{}');SET.forEach(id=>{if(o[id]!==undefined){$(id).type=='checkbox'?$(id).checked=o[id]:$(id).value=o[id]}});if(o.from)Object.assign(FROM,o.from)}catch(e){}
  $('fn').value=FROM.name;$('fa').value=FROM.addr.join('\n');$('fm').value=FROM.mobile;$('fe').value=FROM.mail}
 ['fn','fa','fm','fe'].forEach(id=>$(id).oninput=()=>{FROM.name=$('fn').value.trim();FROM.addr=$('fa').value.split('\n').map(x=>x.trim()).filter(Boolean);FROM.mobile=$('fm').value.trim();FROM.mail=$('fe').value.trim();render()});
 
+
+/* DISPATCH LIST UPLOAD: Inv No | Date | Customer Name | Code | Taxable Amt | No. of boxes */
+const DN=s=>String(s??'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const DAL={inv:['INVNO','INVOICENO','INVOICENUMBER','INV'],date:['DATE','INVDATE','INVOICEDATE'],name:['CUSTOMERNAME','PARTYNAME','CUSTOMER','NAME'],code:['CODE','CUSTOMERCODE','PARTYCODE'],amt:['TAXABLEAMT','TAXABLEAMOUNT','TAXABLE'],box:['NOOFBOXES','NOOFBOX','BOXES','BOX','NOOFCARTONS']};
+function ingestDispatch(rows){
+ const out=$('upmsg');
+ if(!data.length){out.textContent='⚠ Customer master is not loaded yet. Reload the sheet (or upload the master) first.';return}
+ let hr=-1,H=[];
+ for(let r=0;r<Math.min(rows.length,15);r++){const h=(rows[r]||[]).map(DN);
+  if(h.some(x=>DAL.code.includes(x))&&h.some(x=>DAL.box.includes(x))){hr=r;H=h;break}}
+ if(hr<0){out.textContent='⚠ Header not found. Need columns: Inv No., Date, Customer Name, Code, Taxable Amt, No. of boxes';return}
+ const col=k=>H.findIndex(x=>DAL[k].includes(x));
+ const C={inv:col('inv'),date:col('date'),name:col('name'),code:col('code'),box:col('box')};
+ const g=(r,i)=>i<0?'':String(r[i]??'').trim();
+ const byCode=new Map(),byName=new Map();
+ data.forEach((d,i)=>{const c=DN(d.code);if(c&&!byCode.has(c))byCode.set(c,i);const n=DN(d.name);if(n&&!byName.has(n))byName.set(n,i)});
+ const q=[],miss=[],fix=[],viaName=[];
+ rows.slice(hr+1).forEach((r,k)=>{
+  const code=g(r,C.code),name=g(r,C.name),inv=g(r,C.inv),xr=hr+k+2;
+  if(!code&&!name&&!inv)return;
+  let i=code?byCode.get(DN(code)):undefined;
+  if(i===undefined&&name){i=byName.get(DN(name));if(i!==undefined)viaName.push(`row ${xr} (${inv||name})`)}
+  if(i===undefined){miss.push(`row ${xr}: ${inv||'-'} / code "${code||'-'}" / ${name||'-'}`);return}
+  let b=parseInt(g(r,C.box),10);
+  if(!(b>=1)){fix.push(`row ${xr} (${inv||code})`);b=1}
+  if(b>99)b=99;
+  q.push({i,inv,date:g(r,C.date),boxes:b});
+ });
+ queue=q;useList=true;sel.clear();q.forEach(x=>sel.add(x.i));
+ $('onlySel').checked=true;
+ const tot=q.reduce((a,x)=>a+x.boxes,0);
+ let m=`✔ ${q.length} invoice(s) matched · ${sel.size} part${sel.size==1?'y':'ies'} · ${tot} label(s)`;
+ if(viaName.length)m+=`\nℹ Matched by name (code not found): ${viaName.join(', ')}`;
+ if(fix.length)m+=`\n⚠ Box count missing/invalid, used 1: ${fix.join(', ')}`;
+ if(miss.length)m+=`\n❌ ${miss.length} not found in master (skipped):\n   ${miss.join('\n   ')}`;
+ out.textContent=m;
+ renderTable();render();
+}
+$('dfile').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ try{
+  if(/\.csv$/i.test(f.name))ingestDispatch(parseCSV(await f.text()));
+  else{const wb=XLSX.read(await f.arrayBuffer());ingestDispatch(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}))}
+ }catch(err){$('upmsg').textContent='⚠ Could not read file: '+err.message}
+ e.target.value='';
+};
+$('dclr').onclick=()=>{queue=[];useList=false;sel.clear();$('onlySel').checked=false;$('upmsg').textContent='List cleared.';renderTable();render()};
+$('tpl').onclick=()=>{
+ const ws=XLSX.utils.aoa_to_sheet([['Inv No.','Date','Customer Name','Code','Taxable Amt','No. of boxes'],['INV-0001','07-10-2026','SAMPLE PARTY','C001',10000,2]]);
+ ws['!cols']=[{wch:14},{wch:12},{wch:34},{wch:12},{wch:14},{wch:14}];
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Dispatch');
+ XLSX.writeFile(wb,'Address_Print_Template.xlsx');
+};
+
+/* MANUAL ENTRY + EDITABLE ENTRIES (Inv No. / Boxes) */
+function buildList(){$('codelist').innerHTML=data.map(d=>`<option value="${esc(d.code+' — '+d.name)}">`).join('')}
+$('madd').onclick=()=>{
+ const v=$('mcode').value.trim();
+ if(!data.length){alert('Customer master is not loaded yet');return}
+ if(!v){alert('Enter party code or name');return}
+ let i=data.findIndex(d=>(d.code+' — '+d.name)===v);
+ if(i<0)i=data.findIndex(d=>DN(d.code)===DN(v.split(' — ')[0])&&DN(d.code)!=='MANUAL');
+ if(i<0)i=data.findIndex(d=>DN(d.name)===DN(v));
+ if(i<0){alert('Party not found in master: '+v);return}
+ const b=Math.min(99,Math.max(1,parseInt($('mbox').value,10)||1));
+ if(!useList){useList=true;queue=[]}
+ queue.push({i,inv:$('minv').value.trim(),date:'',boxes:b});sel.add(i);
+ $('minv').value='';$('mbox').value=1;$('mcode').value='';$('mcode').focus();
+ renderTable();render();
+};
+function renderEnt(){
+ const el=$('ent');
+ if(!useList||!queue.length){el.innerHTML='';return}
+ el.innerHTML='<table><thead><tr><th>Inv No.</th><th>Party</th><th>Box</th><th></th></tr></thead><tbody>'+
+  queue.map((q,k)=>`<tr><td><input type="text" class="ei" data-k="${k}" value="${esc(q.inv)}" style="width:95px;min-width:0"></td><td>${esc(data[q.i].code)} – ${esc(data[q.i].name)}</td><td><input type="number" class="eb" data-k="${k}" value="${q.boxes}" min="1" max="99" style="width:58px"></td><td><button class="sec ex" data-k="${k}" title="Remove">✕</button></td></tr>`).join('')+'</tbody></table>';
+}
+$('ent').oninput=e=>{
+ const q=queue[+e.target.dataset.k];if(!q)return;
+ if(e.target.classList.contains('ei'))q.inv=e.target.value.trim();
+ else if(e.target.classList.contains('eb'))q.boxes=Math.min(99,Math.max(1,parseInt(e.target.value,10)||1));
+ else return;
+ skipEnt=true;render();skipEnt=false;
+};
+$('ent').onclick=e=>{
+ const b=e.target.closest('.ex');if(!b)return;
+ const k=+b.dataset.k,q=queue[k];if(!q)return;
+ queue.splice(k,1);if(!queue.some(x=>x.i===q.i))sel.delete(q.i);
+ renderTable();render();
+};
 
 /* PINCODE -> City / State (India Post API), cached */
 let pinCache={};const pinTried=new Set();
@@ -262,30 +381,45 @@ const fromBlock=()=>`<b>FROM : ${FROM.name}</b><br>${FROM.addr.map(esc).join('<b
 function render(){
  const mode=$('mode').value, cp=Math.max(1,+$('cp').value||1), z=$('fz').value, note=$('note').value.trim();
  $('envw').style.display=mode=='E'?'':'none';
- let idx=[...sel].sort((a,b)=>a-b); const sb=$('sortby').value;
- if(sb=='name')idx.sort((a,b)=>data[a].name.localeCompare(data[b].name));
- if(sb=='pin')idx.sort((a,b)=>String(data[a].pin).localeCompare(String(data[b].pin)));
- const items=[];idx.forEach(i=>{for(let k=0;k<cp;k++)items.push(data[i])});
- const n=mode=='L8'?8:6, st=mode=='E'?0:Math.min(n-1,Math.max(0,(+$('start').value||1)-1));
+ const sb=$('sortby').value, items=[];
+ if(useList){
+  queue=queue.filter(q=>sel.has(q.i));
+  const have=new Set(queue.map(q=>q.i));
+  [...sel].sort((a,b)=>a-b).forEach(i=>{if(!have.has(i))queue.push({i,inv:'',date:'',boxes:cp})});
+  const qs=queue.slice();
+  if(sb=='name')qs.sort((a,b)=>data[a.i].name.localeCompare(data[b.i].name));
+  if(sb=='pin')qs.sort((a,b)=>String(data[a.i].pin).localeCompare(String(data[b.i].pin)));
+  qs.forEach(q=>{for(let k=1;k<=q.boxes;k++)items.push(Object.assign({},data[q.i],{_inv:q.inv,_box:k,_of:q.boxes}))});
+ }else{
+  let idx=[...sel].sort((a,b)=>a-b);
+  if(sb=='name')idx.sort((a,b)=>data[a].name.localeCompare(data[b].name));
+  if(sb=='pin')idx.sort((a,b)=>String(data[a].pin).localeCompare(String(data[b].pin)));
+  idx.forEach(i=>{for(let k=0;k<cp;k++)items.push(data[i])});
+ }
+ const n=mode=='L8'?8:mode=='G'?4:6, st=mode=='E'?0:Math.min(n-1,Math.max(0,(+$('start').value||1)-1));
  for(let k=0;k<st;k++)items.unshift(null);
  const pages=mode=='E'?items.length:Math.ceil(items.length/n);
- $('cnt').textContent=`${sel.size} selected → ${items.length-st} ${mode=='E'?'envelope(s)':'label(s)'} · ${pages} page(s)`;
+ $('cnt').textContent=`${sel.size} selected${useList?' (dispatch list)':''} → ${items.length-st} ${mode=='E'?'envelope(s)':'label(s)'} · ${pages} page(s)`;
  const nt=note?`<div class="note">${esc(note)}</div>`:'';
- ensurePins(items);
+ const showInv=$('showinv').checked;
+ const meta=d=>(!showInv||d._of===undefined)?'':`<div class="gm"><span>Inv No : ${esc(d._inv)||'—'}</span><span>Box : ${d._box} / ${d._of}</span></div>`;
+ const gMeta=d=>`<div class="gm"><span>Inv No : ${d._inv?esc(d._inv):'__________'}</span><span>Box : ${d._of?d._box+' / '+d._of:'___ / ___'}</span></div>`;
+ const gLabel=d=>`<div class="lbl gl"><div class="gh">GLASS WITH CARE</div><div class="t"><div class="k">TO,</div><div class="n">${esc(d.name)}</div><div class="a">${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div class="ph">${esc(phones(d))}</div>${nt}</div>${gMeta(d)}<div class="frm"><b>FROM : ${esc(FROM.name)}</b><br>${FROM.addr.map(esc).join('<br>')}<br><b>Mob : ${esc(FROM.mobile)}</b></div></div>`;
+ ensurePins(items.filter(Boolean));
  let html='';
  if(mode=='E'){
   const [w,h]=$('esz').value.split(',').map(Number);
   $('pg').textContent=`@page{size:${w}mm ${h}mm;margin:0}`;
   html=items.map(d=>`<div class="page ep" style="width:${w}mm;height:${h-.4}mm;--z:${z}">
-   <div class="toE"><div class="k">TO,</div><div class="n">${esc(d.name)}</div><div>${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div>${esc(phones(d))}</div>${nt}</div>
+   <div class="toE"><div class="k">TO,</div><div class="n">${esc(d.name)}</div><div>${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div>${esc(phones(d))}</div>${nt}${meta(d)}</div>
    ${qrBox(d)}</div>`).join('');
  }else{
-  $('pg').textContent='@page{size:A4 portrait;margin:0}';
-  const rows=n/2, fs=(mode=='L8'?10.5:12.5)*z+'pt', cls=$('cut').checked?'':' nocut';
+  $('pg').textContent=mode=='G'?'@page{size:A4 landscape;margin:0}':'@page{size:A4 portrait;margin:0}';
+  const rows=n/2, fs=(mode=='L8'?10.5:mode=='G'?13.5:12.5)*z+'pt', cls=$('cut').checked?'':' nocut';
   for(let s=0;s<items.length;s+=n){
-   let cells=items.slice(s,s+n).map(d=>d?`<div class="lbl"><div class="to"><div class="t"><div class="k">TO,</div><div class="n">${esc(d.name)}</div><div class="a">${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div class="ph">${esc(phones(d))}</div>${nt}</div>${qrBox(d)}</div></div>`:'<div class="lbl empty"></div>');
+   let cells=items.slice(s,s+n).map(d=>d?(mode=='G'?gLabel(d):`<div class="lbl"><div class="to"><div class="t"><div class="k">TO,</div><div class="n">${esc(d.name)}</div><div class="a">${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div class="ph">${esc(phones(d))}</div>${nt}</div>${qrBox(d)}</div>${meta(d)}</div>`):'<div class="lbl empty"></div>');
    while(cells.length<n)cells.push('<div class="lbl empty"></div>');
-   html+=`<div class="page lp${cls}" style="grid-template-rows:repeat(${rows},1fr);--fs:${fs}">${cells.join('')}</div>`;
+   html+=`<div class="page lp${mode=='G'?' land':''}${cls}" style="grid-template-rows:repeat(${rows},1fr);--fs:${fs}">${cells.join('')}</div>`;
   }
  }
  $('preview').innerHTML=html||'<p style="color:#fff">Select parties from the list.</p>';
@@ -294,6 +428,7 @@ function render(){
    el.innerHTML=qr.createSvgTag({cellSize:4,margin:4,scalable:true});}
   catch(e){el.textContent='QR err'}
  });
+ if(!skipEnt)renderEnt();
  saveSet();
 }
 $('print').onclick=async()=>{if(!sel.size){alert('Select at least one party');return}await ensurePins([...sel].map(i=>data[i]));render();setTimeout(()=>window.print(),300)};
