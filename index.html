@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -44,7 +44,7 @@ input[type=checkbox]{accent-color:var(--pri);width:16px;height:16px;margin:0}
 .chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}
 /* tabs */
 .tabs{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--bd);background:#f7f9fb;flex:none}
-.tab{flex:1;background:transparent;color:var(--mut);padding:9px 6px;white-space:nowrap}
+.tab{flex:1;background:transparent;color:var(--mut);padding:9px 4px;white-space:nowrap;font-size:12.5px}
 .tab:hover{background:#e9eff5;filter:none}
 .tab.on{background:#fff;color:var(--pri);box-shadow:0 1px 3px #0002}
 .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--pri);color:#fff;font-size:11px;line-height:18px}
@@ -52,6 +52,10 @@ input[type=checkbox]{accent-color:var(--pri);width:16px;height:16px;margin:0}
 .pane{display:none;flex:1;min-height:0;flex-direction:column;gap:12px;padding:12px;overflow:auto}
 .pane.on{display:flex}
 #p-cust{overflow:hidden}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:9px;margin-top:3px}
+.tag.warn{background:#fff1e6;color:#b4540a}
+.tag.info{background:#e8f0fe;color:#2b5aa8}
+.qa{margin-bottom:10px;flex-wrap:nowrap}
 .card{border:1px solid var(--bd);border-radius:12px;padding:14px;background:#fff;flex:none}
 .ch{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .step{width:20px;height:20px;border-radius:50%;background:var(--pri);color:#fff;font-size:12px;display:grid;place-items:center}
@@ -191,13 +195,14 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
       <div class="f full"><label for="mcode">Party (code or name)</label><input type="text" id="mcode" list="codelist" placeholder="Start typing to search…"></div>
       <div class="f"><label for="minv">Inv No.</label><input type="text" id="minv" placeholder="INV-0001"></div>
       <div class="f"><label for="mbox">Boxes</label><input type="number" id="mbox" value="1" min="1" max="99"></div>
-      <div class="f"><label for="mcour">Courier</label><input type="text" id="mcour" placeholder="e.g. DTDC"></div>
+      <div class="f"><label for="mcour">Courier</label><input type="text" id="mcour" list="courlist" placeholder="e.g. DTDC"></div>
       <div class="f full row" style="justify-content:flex-end"><button id="madd">＋ Add entry</button></div>
      </div>
-     <datalist id="codelist"></datalist>
+     <datalist id="codelist"></datalist><datalist id="courlist"></datalist>
     </div>
     <div class="card">
      <div class="ch">Label queue</div>
+     <div class="row qa"><input type="text" id="allcour" list="courlist" placeholder="Courier for all entries" style="flex:1;width:auto"><button class="sec" id="applycour">Apply to all</button></div>
      <div id="ent"></div>
     </div>
    </section>
@@ -213,6 +218,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
      <div class="row" style="margin-top:10px;gap:18px">
       <label class="chk"><input type="checkbox" id="onlySel"> Selected only</label>
       <label class="chk"><input type="checkbox" id="noDup"> Hide duplicates</label>
+      <label class="chk"><input type="checkbox" id="onlyIss"> ⚠ Has issues</label>
       <span class="cnote" id="status">Loading…</span>
      </div>
     </div>
@@ -343,15 +349,16 @@ function renderTable(){
  const q=$('q').value.trim().toLowerCase(), only=$('onlySel').checked, nd=$('noDup').checked, seen=new Set();
  shown=data.map((d,i)=>[d,i]).filter(([d,i])=>{
   if(only&&!sel.has(i))return false;
+  if($('onlyIss').checked&&!issues(d).length)return false;
   if(q&&!(d.name+' '+d.code+' '+d.pin+' '+d.addr).toLowerCase().includes(q))return false;
   if(nd){const k=(d.name+d.addr).toUpperCase().replace(/\W/g,'');if(seen.has(k))return false;seen.add(k)}
   return true});
- $('tb').innerHTML=shown.map(([d,i])=>`<tr class="${sel.has(i)?'on':''}"><td><input type="checkbox" data-i="${i}" ${sel.has(i)?'checked':''}></td><td>${esc(d.code)}</td><td>${esc(d.name)}</td><td class="ad">${esc(d.addr)}</td><td>${esc(d.pin)}</td><td><button class="sec loc" data-i="${i}" title="Locate TO address">📍</button></td></tr>`).join('');
+ $('tb').innerHTML=shown.map(([d,i])=>`<tr class="${sel.has(i)?'on':''}"><td><input type="checkbox" data-i="${i}" ${sel.has(i)?'checked':''}></td><td>${esc(d.code)}</td><td>${esc(d.name)}${iw(d)}</td><td class="ad">${esc(d.addr)}</td><td>${esc(d.pin)}</td><td><button class="sec loc" data-i="${i}" title="Locate TO address">📍</button></td></tr>`).join('');
  $('status').textContent=`${shown.length} of ${data.length} parties`;
 }
 $('tb').onchange=e=>{const i=+e.target.dataset.i;e.target.checked?sel.add(i):sel.delete(i);e.target.closest('tr').classList.toggle('on',e.target.checked);render()};
 $('tb').addEventListener('click',e=>{if(e.target.closest('button,input'))return;const tr=e.target.closest('tr');if(!tr)return;const cb=tr.querySelector('input');cb.checked=!cb.checked;cb.dispatchEvent(new Event('change',{bubbles:true}))});
-['onlySel','noDup'].forEach(id=>$(id).onchange=renderTable);
+['onlySel','noDup','onlyIss'].forEach(id=>$(id).onchange=renderTable);
 $('addP').onclick=()=>{const g=id=>$(id).value.trim();if(!g('mn')||!g('ma')){alert('Party name & address required');return}
  data.push({code:'MANUAL',name:g('mn').toUpperCase(),addr:g('ma').toUpperCase(),pin:g('mp'),ph:g('mph'),mob:g('mm')});
  const mi=g('mi'),mb=parseInt($('mb').value,10);
@@ -399,7 +406,7 @@ function ingestDispatch(rows){
   let b=parseInt(g(r,C.box),10);
   if(!(b>=1)){fix.push(`row ${xr} (${inv||code})`);b=1}
   if(b>99)b=99;
-  q.push({i,inv,date:g(r,C.date),boxes:b,courier:g(r,C.cour).toUpperCase()});
+  addCour(g(r,C.cour));q.push({i,inv,date:g(r,C.date),boxes:b,courier:g(r,C.cour).toUpperCase()});
  });
  queue=q;useList=true;sel.clear();q.forEach(x=>sel.add(x.i));
  $('onlySel').checked=true;
@@ -440,14 +447,14 @@ $('madd').onclick=()=>{
  const b=Math.min(99,Math.max(1,parseInt($('mbox').value,10)||1));
  if(!useList){useList=true;queue=[]}
  queue.push({i,inv:$('minv').value.trim(),date:'',boxes:b,courier:$('mcour').value.trim().toUpperCase()});sel.add(i);
- $('minv').value='';$('mcour').value='';$('mbox').value=1;$('mcode').value='';$('mcode').focus();
+ addCour($('mcour').value);$('minv').value='';$('mcour').value='';$('mbox').value=1;$('mcode').value='';$('mcode').focus();
  renderTable();render();
 };
 function renderEnt(){
  const el=$('ent');
  if(!useList||!queue.length){el.innerHTML='<div class="mini">No entries yet — upload a template or add one above.</div>';return}
  el.innerHTML='<table><thead><tr><th>Inv No.</th><th>Party</th><th>Box</th><th>Courier</th><th></th></tr></thead><tbody>'+
-  queue.map((q,k)=>`<tr><td><input type="text" class="ei" data-k="${k}" value="${esc(q.inv)}" style="width:95px;min-width:0"></td><td>${esc(data[q.i].code)} – ${esc(data[q.i].name)}</td><td><input type="number" class="eb" data-k="${k}" value="${q.boxes}" min="1" max="99" style="width:58px"></td><td><input type="text" class="ec" data-k="${k}" value="${esc(q.courier||'')}" style="width:80px;min-width:0"></td><td><button class="sec ex" data-k="${k}" title="Remove">✕</button></td></tr>`).join('')+'</tbody></table>';
+  queue.map((q,k)=>`<tr><td><input type="text" class="ei" data-k="${k}" value="${esc(q.inv)}" style="width:95px;min-width:0"></td><td>${esc(data[q.i].code)} – ${esc(data[q.i].name)}${qtags(q)}</td><td><input type="number" class="eb" data-k="${k}" value="${q.boxes}" min="1" max="99" style="width:58px"></td><td><input type="text" class="ec" list="courlist" data-k="${k}" value="${esc(q.courier||'')}" style="width:80px;min-width:0"></td><td><button class="sec ex" data-k="${k}" title="Remove">✕</button></td></tr>`).join('')+'</tbody></table>';
 }
 $('ent').oninput=e=>{
  const q=queue[+e.target.dataset.k];if(!q)return;
@@ -553,7 +560,32 @@ function render(){
  $('tbsel').textContent=sel.size||'';$('hs').textContent=sel.size;$('hl').textContent=Math.max(0,items.length-st);$('print').disabled=items.length-st<=0;$('tbq').textContent=(useList&&queue.length)?queue.length:'';
  saveSet();
 }
-$('print').onclick=async()=>{if(!sel.size){alert('Select at least one party');return}await ensurePins([...sel].map(i=>data[i]));render();setTimeout(()=>window.print(),300)};
+
+/* ===== Courier memory · print history · checks ===== */
+function ls(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let COUR=ls('ap_cour',[]);
+const COUR0=['DTDC','PROFESSIONAL','ST COURIER','TRACKON','VRL','BLUE DART'];
+function buildCour(){$('courlist').innerHTML=[...new Set([...COUR,...COUR0])].map(c=>`<option value="${esc(c)}">`).join('')}
+function addCour(c){c=String(c||'').trim().toUpperCase();if(!c||COUR.includes(c))return;COUR.unshift(c);COUR=COUR.slice(0,30);sv('ap_cour',COUR);buildCour()}
+function issues(d){const o=[];if(!/^\d{6}$/.test(String(d.pin||'').trim()))o.push('Pincode missing/invalid');if(!d.ph&&!d.mob)o.push('No phone number');if(String(d.addr||'').trim().length<15)o.push('Address looks short');return o}
+function iw(d){const x=issues(d);return x.length?`<div><span class="tag warn" title="${esc(x.join(' · '))}">⚠ ${esc(x[0])}${x.length>1?' +'+(x.length-1):''}</span></div>`:''}
+function qtags(q){let o='';const k=DN(q.inv);
+ if(k){if(queue.filter(x=>DN(x.inv)===k).length>1)o+='<div><span class="tag warn">⚠ Duplicate Inv No. in list</span></div>';}
+ const x=issues(data[q.i]);if(x.length)o+=`<div><span class="tag warn" title="${esc(x.join(' · '))}">⚠ ${esc(x[0])}</span></div>`;return o}
+$('applycour').onclick=()=>{const c=$('allcour').value.trim().toUpperCase();if(!useList||!queue.length){alert('The label queue is empty');return}queue.forEach(q=>q.courier=c);addCour(c);render()};
+$('ent').addEventListener('change',e=>{if(e.target.classList.contains('ec'))addCour(e.target.value);else if(e.target.classList.contains('ei'))renderEnt()});
+$('print').onclick=async()=>{
+ if(!sel.size){alert('Select at least one party');return}
+ const msgs=[];
+ if(useList){
+  const seen={},dd=[];queue.forEach(q=>{const k=DN(q.inv);if(!k)return;if(seen[k])dd.push(q.inv);seen[k]=1});
+  if(dd.length)msgs.push('Duplicate Inv No. in this list:\n  '+[...new Set(dd)].join(', '));
+ }
+ const bad=[...sel].map(i=>data[i]).filter(d=>issues(d).length).map(d=>d.name+' – '+issues(d)[0]);
+ if(bad.length)msgs.push('Missing details:\n  '+bad.slice(0,8).join('\n  ')+(bad.length>8?'\n  …and '+(bad.length-8)+' more':''));
+ if(msgs.length&&!confirm(msgs.join('\n\n')+'\n\nPrint anyway?'))return;
+ await ensurePins([...sel].map(i=>data[i]));render();setTimeout(()=>window.print(),300)};
 /* UI: tabs, zoom, Enter-to-add */
 document.querySelectorAll('.tcard').forEach(b=>b.onclick=()=>{$('mode').value=b.dataset.v;render()});
 const dz=$('drop');
@@ -566,6 +598,7 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
 });
 $('pz').oninput=()=>document.documentElement.style.setProperty('--pz',$('pz').value/100);
 ['mcode','minv','mbox','mcour'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('madd').click()}}));
+buildCour();
 loadSet();loadSheet();render();
 </script>
 </body>
