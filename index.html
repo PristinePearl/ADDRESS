@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -138,6 +138,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
 .gm span{white-space:nowrap}
 .gm span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .gm span:last-child{flex:none}
+.gm span:nth-child(2){flex:none}
 .gh{border:2px solid #000;text-align:center;font-weight:800;letter-spacing:2px;font-size:1.2em;padding:1mm 0;margin-bottom:2mm}
 .lp.land{width:297mm;height:209.6mm}
 .gl .t{flex:1}
@@ -495,6 +496,12 @@ const csLine=d=>{
  return `<div class="cs">CITY : ${esc(c?c.city:'—')} | STATE : ${esc(c?c.state:'—')}</div>`;
 };
 
+function fmtDate(v){
+ v=String(v||'').trim();
+ if(!v){const t=new Date();return String(t.getDate()).padStart(2,'0')+'/'+String(t.getMonth()+1).padStart(2,'0')+'/'+t.getFullYear()}
+ const m=v.match(/^(\d{1,2})[-.\/](\d{1,2})[-.\/](\d{4})$/);
+ return m?m[1].padStart(2,'0')+'/'+m[2].padStart(2,'0')+'/'+m[3]:v;
+}
 function phones(d){return [d.ph&&'Ph: '+d.ph,d.mob&&'Mob: '+d.mob].filter(Boolean).join(' | ')}
 function qrText(d){
  const e=x=>x.replace(/,/g,'\\,'), L=FROM.addr.slice(), last=L.pop()||'';
@@ -517,7 +524,7 @@ function render(){
   const qs=queue.slice();
   if(sb=='name')qs.sort((a,b)=>data[a.i].name.localeCompare(data[b.i].name));
   if(sb=='pin')qs.sort((a,b)=>String(data[a.i].pin).localeCompare(String(data[b.i].pin)));
-  qs.forEach(q=>{for(let k=1;k<=q.boxes;k++)items.push(Object.assign({},data[q.i],{_inv:q.inv,_box:k,_of:q.boxes,_cour:q.courier||''}))});
+  qs.forEach(q=>{for(let k=1;k<=q.boxes;k++)items.push(Object.assign({},data[q.i],{_inv:q.inv,_date:q.date||'',_box:k,_of:q.boxes,_cour:q.courier||''}))});
  }else{
   let idx=[...sel].sort((a,b)=>a-b);
   if(sb=='name')idx.sort((a,b)=>data[a].name.localeCompare(data[b].name));
@@ -531,8 +538,8 @@ function render(){
  const nt=note?`<div class="note">${esc(note)}</div>`:'';
  const showInv=$('showinv').checked;
  const meta=d=>(!showInv||d._of===undefined)?'':`<div class="gm"><span>Inv No : ${esc(d._inv)||'—'}</span><span>Box : ${d._box} / ${d._of}</span></div>`;
- const gMeta=d=>`<div class="gm"><span>Inv No : ${d._inv?esc(d._inv):'__________'}</span><span>Box : ${d._of?d._box+' / '+d._of:'___ / ___'}</span></div>`;
- const gLabel=d=>`<div class="lbl gl"><div class="gh">GLASS WITH CARE</div><div class="t"><div class="k kr"><span>TO,</span>${d._cour?`<span class="cr">${esc(d._cour)}</span>`:''}</div><div class="n">${esc(d.name)}</div><div class="a">${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div class="ph">${esc(phones(d))}</div>${nt}</div>${gMeta(d)}<div class="frm"><b>FROM : ${esc(FROM.name)}</b><br>${FROM.addr.map(esc).join('<br>')}<br><b>Mob : ${esc(FROM.mobile)}</b></div></div>`;
+ const gMeta=d=>`<div class="gm"><span>Inv No : ${d._inv?esc(d._inv):'__________'}</span><span>${esc(fmtDate(d._date))}</span><span>Box : ${d._of?d._box+' / '+d._of:'___ / ___'}</span></div>`;
+ const gLabel=d=>`<div class="lbl gl"><div class="gh">GLASS WITH CARE</div><div class="t"><div class="n kr"><span>TO : ${esc(d.name)}</span>${d._cour?`<span class="cr">${esc(d._cour)}</span>`:''}</div><div class="a">${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div class="ph">${esc(phones(d))}</div>${nt}</div>${gMeta(d)}<div class="frm"><b>FROM : ${esc(FROM.name)}</b><br>${FROM.addr.map(esc).join('<br>')}<br><b>Mob : ${esc(FROM.mobile)}</b></div></div>`;
  ensurePins(items.filter(Boolean));
  let html='';
  if(mode=='E'){
