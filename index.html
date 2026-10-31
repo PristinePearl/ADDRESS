@@ -126,8 +126,8 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
 .t .k{font-size:.8em;font-weight:700;letter-spacing:.5px}
 .t .n{font-weight:700;font-size:1.12em;margin:.5mm 0 1mm}
 .t .a{word-break:break-word}
-.cs{margin-top:1mm;font-weight:600}
-.t .p{font-weight:700;margin-top:1mm}
+.cs{margin-top:1mm;font-weight:600;font-size:.8em}
+.t .p{font-weight:700;margin-top:1mm;font-size:.8em}
 .t .ph{margin-top:.5mm}
 .qrw{width:27mm;flex:none;text-align:center}
 .qr{width:100%;aspect-ratio:1}
@@ -139,11 +139,12 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
 .gm span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .gm span:last-child{flex:none}
 .gm span:nth-child(2){flex:none}
+.gm span{font-size:.8em}
 .gh{border:2px solid #000;text-align:center;font-weight:800;letter-spacing:2px;font-size:1.2em;padding:1mm 0;margin-bottom:2mm}
 .lp.land{width:297mm;height:209.6mm}
 .gl .t{flex:1}
 .kr{display:flex;justify-content:space-between;align-items:center;gap:3mm}
-.cr{font-style:italic;font-size:.85em;font-weight:500;opacity:.6}
+.cr{font-style:italic;font-size:.7em;font-weight:500;opacity:.6}
 .gl .frm{font-size:.78em}
 .frm{border-top:1px solid #000;margin-top:2mm;padding-top:1.5mm;font-size:.66em;line-height:1.25}
 .frm b{font-size:1.05em}
@@ -152,7 +153,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
 .ep .toE{position:absolute;left:12%;top:26%;right:44mm;font-size:calc(12.5pt*var(--z,1));line-height:1.3}
 .ep .toE .k{font-weight:700;font-size:.8em}
 .ep .toE .n{font-weight:700;font-size:1.12em;margin:1mm 0 1.5mm}
-.ep .toE .p{font-weight:700;margin-top:1.5mm}
+.ep .toE .p{font-weight:700;margin-top:1.5mm;font-size:.8em}
 .ep .qrw{position:absolute;right:8mm;bottom:6mm;width:30mm}.ep .cap{font-size:7pt}
 @media(max-width:1000px){
  .app{height:auto}.ws{display:block}.side{max-height:75vh;margin-bottom:14px}.main{display:block}.settings{margin-bottom:12px}.pvwrap{min-height:420px}
@@ -185,7 +186,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
    <section class="pane on" id="p-dispatch">
     <div class="card">
      <div class="ch"><span class="step">1</span>Import dispatch list</div>
-     <p class="hint">Columns: Inv No. · Date · Customer Name · Code · Taxable Amt · No. of boxes · Courier.<br>Parties are matched by Code; one label is printed per box.</p>
+     <p class="hint">Columns: Pck Sl No. · Date · Customer Name · Code · Taxable Amt · No. of boxes · Courier.<br>Parties are matched by Code; one label is printed per box.</p>
      <label class="drop" id="drop"><div class="dico">⬆</div><b>Drop your filled template here</b><span>or click to browse · .xlsx / .csv</span><input type="file" id="dfile" accept=".xlsx,.xls,.csv" hidden></label>
      <div class="row" style="margin-top:10px"><button class="sec" id="tpl">⬇ Download template</button><button class="ghost" id="dclr">✕ Clear list</button></div>
     </div>
@@ -194,7 +195,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
      <div class="ch"><span class="step">2</span>Or add an entry manually</div>
      <div class="form">
       <div class="f full"><label for="mcode">Party (code or name)</label><input type="text" id="mcode" list="codelist" placeholder="Start typing to search…"></div>
-      <div class="f"><label for="minv">Inv No.</label><input type="text" id="minv" placeholder="INV-0001"></div>
+      <div class="f"><label for="minv">Pck Sl No.</label><input type="text" id="minv" placeholder="PCK-0001"></div>
       <div class="f"><label for="mbox">Boxes</label><input type="number" id="mbox" value="1" min="1" max="99"></div>
       <div class="f"><label for="mcour">Courier</label><input type="text" id="mcour" list="courlist" placeholder="e.g. DTDC"></div>
       <div class="f full row" style="justify-content:flex-end"><button id="madd">＋ Add entry</button></div>
@@ -238,7 +239,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
      </div>
      <p class="hint" style="margin:14px 0 8px">Optional — add it straight to the label queue</p>
      <div class="form2">
-      <div class="f"><label for="mi">Inv No.</label><input type="text" id="mi"></div>
+      <div class="f"><label for="mi">Pck Sl No.</label><input type="text" id="mi"></div>
       <div class="f"><label for="mb">Boxes</label><input type="number" id="mb" min="1" max="99"></div>
      </div>
      <div class="row" style="margin-top:14px;justify-content:space-between"><span class="cnote" id="pmsg"></span><button id="addP">Add &amp; select</button></div>
@@ -281,7 +282,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
     </div>
     <div class="srow">
      <label class="chk"><input type="checkbox" id="cut" checked> Cut lines</label>
-     <label class="chk"><input type="checkbox" id="showinv" checked> Show Inv No. &amp; Box x/n</label>
+     <label class="chk"><input type="checkbox" id="showinv" checked> Show Pck Sl No. &amp; Box x/n</label>
      <div class="field grow"><label for="note">Extra line on every label</label><input type="text" id="note" placeholder="e.g. Ref: INV-1024 / Fragile"></div>
     </div>
     <details class="snd"><summary>✏️ Sender (FROM) details</summary>
@@ -381,9 +382,9 @@ function loadSet(){try{const o=JSON.parse(localStorage.getItem('ap_set')||'{}');
 ['fn','fa','fm','fe'].forEach(id=>$(id).oninput=()=>{FROM.name=$('fn').value.trim();FROM.addr=$('fa').value.split('\n').map(x=>x.trim()).filter(Boolean);FROM.mobile=$('fm').value.trim();FROM.mail=$('fe').value.trim();render()});
 
 
-/* DISPATCH LIST UPLOAD: Inv No | Date | Customer Name | Code | Taxable Amt | No. of boxes */
+/* DISPATCH LIST UPLOAD: Pck Sl No | Date | Customer Name | Code | Taxable Amt | No. of boxes */
 const DN=s=>String(s??'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-const DAL={inv:['INVNO','INVOICENO','INVOICENUMBER','INV'],date:['DATE','INVDATE','INVOICEDATE'],name:['CUSTOMERNAME','PARTYNAME','CUSTOMER','NAME'],code:['CODE','CUSTOMERCODE','PARTYCODE'],amt:['TAXABLEAMT','TAXABLEAMOUNT','TAXABLE'],courier:['COURIER','COURIERNAME','TRANSPORT','TRANSPORTER'],
+const DAL={inv:['PCKSLNO','PACKSLNO','PCKSLNUMBER','INVNO','INVOICENO','INVOICENUMBER','INV'],date:['DATE','INVDATE','INVOICEDATE'],name:['CUSTOMERNAME','PARTYNAME','CUSTOMER','NAME'],code:['CODE','CUSTOMERCODE','PARTYCODE'],amt:['TAXABLEAMT','TAXABLEAMOUNT','TAXABLE'],courier:['COURIER','COURIERNAME','TRANSPORT','TRANSPORTER'],
  box:['NOOFBOXES','NOOFBOX','BOXES','BOX','NOOFCARTONS']};
 function ingestDispatch(rows){
  const out=$('upmsg');
@@ -391,7 +392,7 @@ function ingestDispatch(rows){
  let hr=-1,H=[];
  for(let r=0;r<Math.min(rows.length,15);r++){const h=(rows[r]||[]).map(DN);
   if(h.some(x=>DAL.code.includes(x))&&h.some(x=>DAL.box.includes(x))){hr=r;H=h;break}}
- if(hr<0){out.textContent='⚠ Header not found. Need columns: Inv No., Date, Customer Name, Code, Taxable Amt, No. of boxes, Courier';return}
+ if(hr<0){out.textContent='⚠ Header not found. Need columns: Pck Sl No., Date, Customer Name, Code, Taxable Amt, No. of boxes, Courier';return}
  const col=k=>H.findIndex(x=>DAL[k].includes(x));
  const C={inv:col('inv'),date:col('date'),name:col('name'),code:col('code'),box:col('box'),cour:col('courier')};
  const g=(r,i)=>i<0?'':String(r[i]??'').trim();
@@ -429,13 +430,13 @@ $('dfile').onchange=async e=>{
 };
 $('dclr').onclick=()=>{queue=[];useList=false;sel.clear();$('onlySel').checked=false;$('upmsg').textContent='List cleared.';renderTable();render()};
 $('tpl').onclick=()=>{
- const ws=XLSX.utils.aoa_to_sheet([['Inv No.','Date','Customer Name','Code','Taxable Amt','No. of boxes','Courier'],['INV-0001','07-10-2026','SAMPLE PARTY','C001',10000,2,'DTDC']]);
+ const ws=XLSX.utils.aoa_to_sheet([['Pck Sl No.','Date','Customer Name','Code','Taxable Amt','No. of boxes','Courier'],['PCK-0001','07-10-2026','SAMPLE PARTY','C001',10000,2,'DTDC']]);
  ws['!cols']=[{wch:14},{wch:12},{wch:34},{wch:12},{wch:14},{wch:14},{wch:16}];
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Dispatch');
  XLSX.writeFile(wb,'Address_Print_Template.xlsx');
 };
 
-/* MANUAL ENTRY + EDITABLE ENTRIES (Inv No. / Boxes) */
+/* MANUAL ENTRY + EDITABLE ENTRIES (Pck Sl No. / Boxes) */
 function buildList(){$('codelist').innerHTML=data.map(d=>`<option value="${esc(d.code+' — '+d.name)}">`).join('')}
 $('madd').onclick=()=>{
  const v=$('mcode').value.trim();
@@ -454,7 +455,7 @@ $('madd').onclick=()=>{
 function renderEnt(){
  const el=$('ent');
  if(!useList||!queue.length){el.innerHTML='<div class="mini">No entries yet — upload a template or add one above.</div>';return}
- el.innerHTML='<table><thead><tr><th>Inv No.</th><th>Party</th><th>Box</th><th>Courier</th><th></th></tr></thead><tbody>'+
+ el.innerHTML='<table><thead><tr><th>Pck Sl No.</th><th>Party</th><th>Box</th><th>Courier</th><th></th></tr></thead><tbody>'+
   queue.map((q,k)=>`<tr><td><input type="text" class="ei" data-k="${k}" value="${esc(q.inv)}" style="width:95px;min-width:0"></td><td>${esc(data[q.i].code)} – ${esc(data[q.i].name)}${qtags(q)}</td><td><input type="number" class="eb" data-k="${k}" value="${q.boxes}" min="1" max="99" style="width:58px"></td><td><input type="text" class="ec" list="courlist" data-k="${k}" value="${esc(q.courier||'')}" style="width:80px;min-width:0"></td><td><button class="sec ex" data-k="${k}" title="Remove">✕</button></td></tr>`).join('')+'</tbody></table>';
 }
 $('ent').oninput=e=>{
@@ -537,8 +538,8 @@ function render(){
  $('cnt').textContent=`${sel.size} selected${useList?' (dispatch list)':''} → ${items.length-st} ${mode=='E'?'envelope(s)':'label(s)'} · ${pages} page(s)`;
  const nt=note?`<div class="note">${esc(note)}</div>`:'';
  const showInv=$('showinv').checked;
- const meta=d=>(!showInv||d._of===undefined)?'':`<div class="gm"><span>Inv No : ${esc(d._inv)||'—'}</span><span>Box : ${d._box} / ${d._of}</span></div>`;
- const gMeta=d=>`<div class="gm"><span>Inv No : ${d._inv?esc(d._inv):'__________'}</span><span>${esc(fmtDate(d._date))}</span><span>Box : ${d._of?d._box+' / '+d._of:'___ / ___'}</span></div>`;
+ const meta=d=>(!showInv||d._of===undefined)?'':`<div class="gm"><span>Pck Sl No : ${esc(d._inv)||'—'}</span><span>Box : ${d._box} / ${d._of}</span></div>`;
+ const gMeta=d=>`<div class="gm"><span>Pck Sl No : ${d._inv?esc(d._inv):'__________'}</span><span>${esc(fmtDate(d._date))}</span><span>Box : ${d._of?d._box+' / '+d._of:'___ / ___'}</span></div>`;
  const gLabel=d=>`<div class="lbl gl"><div class="gh">GLASS WITH CARE</div><div class="t"><div class="n kr"><span>TO : ${esc(d.name)}</span>${d._cour?`<span class="cr">${esc(d._cour)}</span>`:''}</div><div class="a">${esc(d.addr)}</div>${csLine(d)}<div class="p">PIN : ${esc(d.pin)}</div><div class="ph">${esc(phones(d))}</div>${nt}</div>${gMeta(d)}<div class="frm"><b>FROM : ${esc(FROM.name)}</b><br>${FROM.addr.map(esc).join('<br>')}<br><b>Mob : ${esc(FROM.mobile)}</b></div></div>`;
  ensurePins(items.filter(Boolean));
  let html='';
@@ -578,7 +579,7 @@ function addCour(c){c=String(c||'').trim().toUpperCase();if(!c||COUR.includes(c)
 function issues(d){const o=[];if(!/^\d{6}$/.test(String(d.pin||'').trim()))o.push('Pincode missing/invalid');if(!d.ph&&!d.mob)o.push('No phone number');if(String(d.addr||'').trim().length<15)o.push('Address looks short');return o}
 function iw(d){const x=issues(d);return x.length?`<div><span class="tag warn" title="${esc(x.join(' · '))}">⚠ ${esc(x[0])}${x.length>1?' +'+(x.length-1):''}</span></div>`:''}
 function qtags(q){let o='';const k=DN(q.inv);
- if(k){if(queue.filter(x=>DN(x.inv)===k).length>1)o+='<div><span class="tag warn">⚠ Duplicate Inv No. in list</span></div>';}
+ if(k){if(queue.filter(x=>DN(x.inv)===k).length>1)o+='<div><span class="tag warn">⚠ Duplicate Pck Sl No. in list</span></div>';}
  const x=issues(data[q.i]);if(x.length)o+=`<div><span class="tag warn" title="${esc(x.join(' · '))}">⚠ ${esc(x[0])}</span></div>`;return o}
 $('applycour').onclick=()=>{const c=$('allcour').value.trim().toUpperCase();if(!useList||!queue.length){alert('The label queue is empty');return}queue.forEach(q=>q.courier=c);addCour(c);render()};
 $('ent').addEventListener('change',e=>{if(e.target.classList.contains('ec'))addCour(e.target.value);else if(e.target.classList.contains('ei'))renderEnt()});
@@ -587,7 +588,7 @@ $('print').onclick=async()=>{
  const msgs=[];
  if(useList){
   const seen={},dd=[];queue.forEach(q=>{const k=DN(q.inv);if(!k)return;if(seen[k])dd.push(q.inv);seen[k]=1});
-  if(dd.length)msgs.push('Duplicate Inv No. in this list:\n  '+[...new Set(dd)].join(', '));
+  if(dd.length)msgs.push('Duplicate Pck Sl No. in this list:\n  '+[...new Set(dd)].join(', '));
  }
  const bad=[...sel].map(i=>data[i]).filter(d=>issues(d).length).map(d=>d.name+' – '+issues(d)[0]);
  if(bad.length)msgs.push('Missing details:\n  '+bad.slice(0,8).join('\n  ')+(bad.length>8?'\n  …and '+(bad.length-8)+' more':''));
