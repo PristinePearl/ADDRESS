@@ -173,7 +173,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
 <div class="app">
  <header class="top noprint">
   <div class="brand"><div class="logo"><img src="https://pristinepearl.github.io/Home/alt-logo.png" alt="Pristine Pearl" onerror="this.replaceWith(document.createTextNode('📮'))"></div><div><h1>Address Printer</h1><p>Labels, Glass With Care stickers &amp; envelopes</p></div></div>
-  <div class="hright"><div class="hs"><b id="hs">0</b><span>Parties</span></div><div class="hs"><b id="hl">0</b><span>Labels</span></div><button class="big" id="print">🖨 Print</button></div>
+  <div class="hright"><div class="hs"><b id="hs">0</b><span>Parties</span></div><div class="hs"><b id="hl">0</b><span>Labels</span></div><div class="hs" id="syncbox"><b id="sync">—</b><span>Sheet log</span></div><button class="big" id="print">🖨 Print</button></div>
  </header>
  <div class="ws">
   <aside class="side noprint">
@@ -206,6 +206,16 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
      <div class="ch">Label queue</div>
      <div class="row qa"><input type="text" id="allcour" list="courlist" placeholder="Courier for all entries" style="flex:1;width:auto"><button class="sec" id="applycour">Apply to all</button></div>
      <div id="ent"></div>
+    </div>
+    <div class="card">
+     <div class="ch">Export</div>
+     <div class="form2">
+      <div class="f"><label for="xfrom">From date</label><input type="date" id="xfrom"></div>
+      <div class="f"><label for="xto">To date</label><input type="date" id="xto"></div>
+      <div class="f full"><label for="xcour">Courier (optional)</label><input type="text" id="xcour" list="courlist" placeholder="All couriers"></div>
+     </div>
+     <div class="row" style="margin-top:10px"><button id="xlog">⬇ Export sheet log (.xlsx)</button><button class="sec" id="xq">⬇ Export current queue</button></div>
+     <div class="cnote" id="xmsg" style="margin-top:8px"></div>
     </div>
    </section>
 
@@ -309,6 +319,8 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
 
 <script>
 const SHEET_ID='1BgTwSgEe2uyqOj9aD-wYf1wuwLHmbUF5KrE1JvHU98w', GID=0;
+/* Paste your deployed Apps Script Web App URL (…/exec) here */
+const LOG_URL='https://script.google.com/macros/s/AKfycbwCPS70KV7FZWuVQA5jQG_MMNoyEZj9GILdMZJw03LAhHZN46ErbuAa_e3GroAa9zDG/exec';
 const FROM={
  name:'PRISTINE PEARL PHARMA PVT LTD',
  addr:['SECOND FLOOR - 2B, DOOR NO: 129, THOTTASALAI EAST,','POWER HOUSE ROAD, PERUR VILLAGE,','COIMBATORE - 641002'],
@@ -366,7 +378,7 @@ $('addP').onclick=()=>{const g=id=>$(id).value.trim();if(!g('mn')||!g('ma')){ale
  const mi=g('mi'),mb=parseInt($('mb').value,10);
  sel.add(data.length-1);
  $('pmsg').textContent='✔ Added & selected: '+data[data.length-1].name;
- if(mi||mb>=1){if(!useList){useList=true;queue=[]}queue.push({i:data.length-1,inv:mi,date:'',boxes:Math.min(99,mb>=1?mb:1),courier:''})}
+ if(mi||mb>=1){if(!useList){useList=true;queue=[]}queue.push({i:data.length-1,inv:mi,date:'',amt:'',boxes:Math.min(99,mb>=1?mb:1),courier:''});saveLog([queue[queue.length-1]],'Manual')}
  ['mn','ma','mp','mph','mm','mi','mb'].forEach(id=>$(id).value='');buildList();renderTable();render()};
 $('q').oninput=renderTable;
 $('selAll').onclick=()=>{shown.forEach(([,i])=>sel.add(i));renderTable();render()};
@@ -394,7 +406,7 @@ function ingestDispatch(rows){
   if(h.some(x=>DAL.code.includes(x))&&h.some(x=>DAL.box.includes(x))){hr=r;H=h;break}}
  if(hr<0){out.textContent='⚠ Header not found. Need columns: Pck Sl No., Date, Customer Name, Code, Taxable Amt, No. of boxes, Courier';return}
  const col=k=>H.findIndex(x=>DAL[k].includes(x));
- const C={inv:col('inv'),date:col('date'),name:col('name'),code:col('code'),box:col('box'),cour:col('courier')};
+ const C={inv:col('inv'),date:col('date'),name:col('name'),code:col('code'),amt:col('amt'),box:col('box'),cour:col('courier')};
  const g=(r,i)=>i<0?'':String(r[i]??'').trim();
  const byCode=new Map(),byName=new Map();
  data.forEach((d,i)=>{const c=DN(d.code);if(c&&!byCode.has(c))byCode.set(c,i);const n=DN(d.name);if(n&&!byName.has(n))byName.set(n,i)});
@@ -408,7 +420,7 @@ function ingestDispatch(rows){
   let b=parseInt(g(r,C.box),10);
   if(!(b>=1)){fix.push(`row ${xr} (${inv||code})`);b=1}
   if(b>99)b=99;
-  addCour(g(r,C.cour));q.push({i,inv,date:g(r,C.date),boxes:b,courier:g(r,C.cour).toUpperCase()});
+  addCour(g(r,C.cour));q.push({i,inv,date:g(r,C.date),amt:g(r,C.amt),boxes:b,courier:g(r,C.cour).toUpperCase()});
  });
  queue=q;useList=true;sel.clear();q.forEach(x=>sel.add(x.i));
  $('onlySel').checked=true;
@@ -419,6 +431,7 @@ function ingestDispatch(rows){
  if(miss.length)m+=`\n❌ ${miss.length} not found in master (skipped):\n   ${miss.join('\n   ')}`;
  out.textContent=m;
  renderTable();render();
+ saveLog(queue.slice(),'Upload');
 }
 $('dfile').onchange=async e=>{
  const f=e.target.files[0];if(!f)return;
@@ -448,7 +461,7 @@ $('madd').onclick=()=>{
  if(i<0){alert('Party not found in master: '+v);return}
  const b=Math.min(99,Math.max(1,parseInt($('mbox').value,10)||1));
  if(!useList){useList=true;queue=[]}
- queue.push({i,inv:$('minv').value.trim(),date:'',boxes:b,courier:$('mcour').value.trim().toUpperCase()});sel.add(i);
+ queue.push({i,inv:$('minv').value.trim(),date:'',amt:'',boxes:b,courier:$('mcour').value.trim().toUpperCase()});sel.add(i);saveLog([queue[queue.length-1]],'Manual');
  addCour($('mcour').value);$('minv').value='';$('mcour').value='';$('mbox').value=1;$('mcode').value='';$('mcode').focus();
  renderTable();render();
 };
@@ -465,6 +478,7 @@ $('ent').oninput=e=>{
  else if(e.target.classList.contains('eb'))q.boxes=Math.min(99,Math.max(1,parseInt(e.target.value,10)||1));
  else return;
  skipEnt=true;render();skipEnt=false;
+ schedSave(q);
 };
 $('ent').onclick=e=>{
  const b=e.target.closest('.ex');if(!b)return;
@@ -569,6 +583,60 @@ function render(){
  saveSet();
 }
 
+/* ===== Google Sheet log (auto-save) ===== */
+function setSync(t,c){const e=$('sync');if(e){e.textContent=t;e.style.color=c||''}}
+function logRow(q){const d=data[q.i]||{};return{inv:q.inv||'',date:fmtDate(q.date),name:d.name||'',code:d.code||'',amt:q.amt||'',boxes:q.boxes,courier:q.courier||''}}
+async function postLog(body){
+ if(!LOG_URL||LOG_URL.indexOf('PASTE_')===0){setSync('Not set','#f5b041');return false}
+ setSync('Saving…','#fff');
+ try{
+  const r=await fetch(LOG_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  const j=await r.json();
+  if(j&&j.ok){setSync('✔ Saved','#7dffb0');return j}
+  throw new Error(j&&j.error||'fail');
+ }catch(e){setSync('✖ Failed','#ff8a80');console.error('Sheet log',e);return false}
+}
+function saveLog(qs,src){
+ const rows=qs.filter(q=>data[q.i]).map(logRow);
+ if(!rows.length)return;
+ postLog({action:'save',source:src,rows}).then(j=>{if(j&&src==='Upload'){const m=$('upmsg');m.textContent+=`\n☁ Saved to sheet: ${j.added} new · ${j.updated} updated`}});
+}
+function markPrinted(qs){postLog({action:'printed',rows:qs.filter(q=>data[q.i]).map(logRow)})}
+const _pend=new Map();let _tm=null;
+function schedSave(q){_pend.set(q,1);clearTimeout(_tm);_tm=setTimeout(()=>{const a=[..._pend.keys()].filter(x=>queue.includes(x));_pend.clear();saveLog(a,'Edit')},1500)}
+
+/* ===== Export ===== */
+const pD=v=>{const m=String(v||'').match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);return m?new Date(+m[3],+m[2]-1,+m[1]):null};
+function dlXlsx(head,rows,name,widths){
+ const ws=XLSX.utils.aoa_to_sheet([head].concat(rows));
+ ws['!cols']=(widths||head.map(()=>14)).map(w=>({wch:w}));
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Dispatch');
+ XLSX.writeFile(wb,name+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+$('xlog').onclick=async()=>{
+ const m=$('xmsg');
+ if(!LOG_URL||LOG_URL.indexOf('PASTE_')===0){m.textContent='⚠ Set LOG_URL first.';return}
+ m.textContent='Fetching log…';
+ try{
+  const r=await fetch(LOG_URL+'?action=list');const j=await r.json();
+  if(!j.ok)throw new Error(j.error||'fail');
+  const f=$('xfrom').value?new Date($('xfrom').value+'T00:00:00'):null, t=$('xto').value?new Date($('xto').value+'T00:00:00'):null, c=$('xcour').value.trim().toUpperCase();
+  const rows=j.rows.filter(x=>{const d=pD(x[1]);
+   if((f||t)&&!d)return false;if(f&&d<f)return false;if(t&&d>t)return false;
+   if(c&&String(x[6]).toUpperCase()!==c)return false;return true});
+  if(!rows.length){m.textContent='No records for this filter.';return}
+  dlXlsx(j.head,rows,'Dispatch_Log',[14,12,34,12,14,12,16,18,18,10,9,18,11]);
+  m.textContent=`✔ Exported ${rows.length} of ${j.rows.length} record(s).`;
+ }catch(e){m.textContent='⚠ Export failed: '+e.message}
+};
+$('xq').onclick=()=>{
+ const m=$('xmsg');
+ if(!useList||!queue.length){m.textContent='Queue is empty.';return}
+ dlXlsx(['Pck Sl No.','Date','Customer Name','Code','Taxable Amt','No. of Boxes','Courier'],
+  queue.map(q=>{const x=logRow(q);return[x.inv,x.date,x.name,x.code,x.amt,x.boxes,x.courier]}),'Dispatch_Queue',[14,12,34,12,14,12,16]);
+ m.textContent=`✔ Exported ${queue.length} row(s).`;
+};
+
 /* ===== Courier memory · print history · checks ===== */
 function ls(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
 function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
@@ -581,7 +649,7 @@ function iw(d){const x=issues(d);return x.length?`<div><span class="tag warn" ti
 function qtags(q){let o='';const k=DN(q.inv);
  if(k){if(queue.filter(x=>DN(x.inv)===k).length>1)o+='<div><span class="tag warn">⚠ Duplicate Pck Sl No. in list</span></div>';}
  const x=issues(data[q.i]);if(x.length)o+=`<div><span class="tag warn" title="${esc(x.join(' · '))}">⚠ ${esc(x[0])}</span></div>`;return o}
-$('applycour').onclick=()=>{const c=$('allcour').value.trim().toUpperCase();if(!useList||!queue.length){alert('The label queue is empty');return}queue.forEach(q=>q.courier=c);addCour(c);render()};
+$('applycour').onclick=()=>{const c=$('allcour').value.trim().toUpperCase();if(!useList||!queue.length){alert('The label queue is empty');return}queue.forEach(q=>q.courier=c);addCour(c);render();saveLog(queue.slice(),'Edit')};
 $('ent').addEventListener('change',e=>{if(e.target.classList.contains('ec'))addCour(e.target.value);else if(e.target.classList.contains('ei'))renderEnt()});
 $('print').onclick=async()=>{
  if(!sel.size){alert('Select at least one party');return}
@@ -593,7 +661,7 @@ $('print').onclick=async()=>{
  const bad=[...sel].map(i=>data[i]).filter(d=>issues(d).length).map(d=>d.name+' – '+issues(d)[0]);
  if(bad.length)msgs.push('Missing details:\n  '+bad.slice(0,8).join('\n  ')+(bad.length>8?'\n  …and '+(bad.length-8)+' more':''));
  if(msgs.length&&!confirm(msgs.join('\n\n')+'\n\nPrint anyway?'))return;
- await ensurePins([...sel].map(i=>data[i]));render();setTimeout(()=>window.print(),300)};
+ await ensurePins([...sel].map(i=>data[i]));render();if(useList)markPrinted(queue.slice());setTimeout(()=>window.print(),300)};
 /* UI: tabs, zoom, Enter-to-add */
 document.querySelectorAll('.tcard').forEach(b=>b.onclick=()=>{$('mode').value=b.dataset.v;render()});
 const dz=$('drop');
