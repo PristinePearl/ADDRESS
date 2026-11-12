@@ -44,7 +44,7 @@ input[type=checkbox]{accent-color:var(--pri);width:16px;height:16px;margin:0}
 .chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}
 /* tabs */
 .tabs{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--bd);background:#f7f9fb;flex:none}
-.tab{flex:1;background:transparent;color:var(--mut);padding:9px 4px;white-space:nowrap;font-size:12.5px}
+.tab{flex:1;background:transparent;color:var(--mut);padding:9px 2px;white-space:nowrap;font-size:12px}
 .tab:hover{background:#e9eff5;filter:none}
 .tab.on{background:#fff;color:var(--pri);box-shadow:0 1px 3px #0002}
 .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--pri);color:#fff;font-size:11px;line-height:18px}
@@ -155,6 +155,48 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
 .ep .toE .n{font-weight:700;font-size:1.12em;margin:1mm 0 1.5mm}
 .ep .toE .p{font-weight:700;margin-top:1.5mm;font-size:.8em}
 .ep .qrw{position:absolute;right:8mm;bottom:6mm;width:30mm}.ep .cap{font-size:7pt}
+#rs{display:none}
+.rs{font-family:Segoe UI,Arial,sans-serif;color:#111;font-size:9.5pt;line-height:1.3}
+.rs .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8mm;padding-bottom:3mm;border-bottom:2.5px solid #0b5c8a;margin-bottom:3.5mm}
+.rs .co{font-size:13pt;font-weight:800;color:#0b5c8a;letter-spacing:.3px}
+.rs .co small{display:block;font-size:7.5pt;font-weight:500;color:#555;letter-spacing:0;margin-top:.6mm}
+.rs .ti{text-align:right}.rs .ti b{display:block;font-size:15pt;letter-spacing:1.5px}.rs .ti span{font-size:8.5pt;color:#444}
+.rs .info{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #888;border-bottom:0}
+.rs .info:last-of-type{border-bottom:1px solid #888}
+.rs .info>div{padding:1.4mm 2.5mm;border-right:1px solid #888;min-width:0}
+.rs .info>div:last-child{border-right:0}
+.rs .info label{display:block;font-size:6.5pt;text-transform:uppercase;color:#666;letter-spacing:.5px}
+.rs .info b{font-size:10pt}
+.rs .info.blank>div{height:10.5mm}
+.rs .sp{height:3.5mm}
+.rs table{width:100%;border-collapse:collapse;font-size:9pt}
+.rs table.fx{table-layout:fixed}
+.rs th{position:static;background:#e9eef3;color:#111;border:1px solid #777;padding:1.8mm 2mm;font-size:7.5pt;text-transform:uppercase;letter-spacing:.4px;text-align:left}
+.rs td{border:1px solid #999;padding:2mm;vertical-align:top;word-wrap:break-word}
+.rs tbody tr:nth-child(even) td{background:#f7f9fb}
+.rs tr:hover td{background:#fff}
+.rs tr{page-break-inside:avoid}
+.rs td.c,.rs th.c{text-align:center}.rs td.r,.rs th.r{text-align:right}
+.rs td small{color:#555;font-size:7.5pt}
+.rs tfoot td{font-weight:700;background:#e9eef3!important}
+.rs .sg{display:flex;gap:12mm;margin-top:16mm;font-size:8.5pt;page-break-inside:avoid}
+.rs .sg div{flex:1;border-top:1px solid #111;padding-top:1mm;text-align:center}
+.rs .ft{margin-top:3mm;font-size:7.5pt;color:#666;text-align:right}
+.rs.pbk{page-break-before:always;break-before:page}
+.rsprev{padding:10mm}
+body.repmode .settings{display:none}
+body.repmode .ws{grid-template-columns:minmax(380px,420px) 1fr}
+.pvwrap.fs{position:fixed;inset:0;z-index:50;border-radius:0;border:0}
+.rs{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.rs h4{margin:5mm 0 1.5mm;font-size:10pt;border-bottom:1px solid #999;padding-bottom:.8mm}
+.rs .bar{display:flex;align-items:center;gap:3mm;margin:1.3mm 0;font-size:8.5pt}
+.rs .bar .l{width:34mm;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rs .bar .t{flex:1;background:#eef2f6}
+.rs .bar i{display:block;height:4.2mm;background:#0b5c8a}
+.rs .bar b{width:14mm;text-align:right;flex:none}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rgrid button{text-align:left}
+@media print{body.rsp .app{display:none!important}body.rsp #rs{display:block}}
 @media(max-width:1000px){
  .app{height:auto}.ws{display:block}.side{max-height:75vh;margin-bottom:14px}.main{display:block}.settings{margin-bottom:12px}.pvwrap{min-height:420px}
 }
@@ -181,6 +223,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
     <button class="tab on" data-t="p-dispatch">📦 Dispatch list<span class="badge" id="tbq"></span></button>
     <button class="tab" data-t="p-cust">👥 Customers<span class="badge" id="tbsel"></span></button>
     <button class="tab" data-t="p-new">➕ New party</button>
+    <button class="tab" data-t="p-rep">📊 Reports</button>
    </nav>
 
    <section class="pane on" id="p-dispatch">
@@ -207,16 +250,6 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
      <div class="row qa"><input type="text" id="allcour" list="courlist" placeholder="Courier for all entries" style="flex:1;width:auto"><button class="sec" id="applycour">Apply to all</button></div>
      <div id="ent"></div>
     </div>
-    <div class="card">
-     <div class="ch">Export</div>
-     <div class="form2">
-      <div class="f"><label for="xfrom">From date</label><input type="date" id="xfrom"></div>
-      <div class="f"><label for="xto">To date</label><input type="date" id="xto"></div>
-      <div class="f full"><label for="xcour">Courier (optional)</label><input type="text" id="xcour" list="courlist" placeholder="All couriers"></div>
-     </div>
-     <div class="row" style="margin-top:10px"><button id="xlog">⬇ Export sheet log (.xlsx)</button><button class="sec" id="xq">⬇ Export current queue</button></div>
-     <div class="cnote" id="xmsg" style="margin-top:8px"></div>
-    </div>
    </section>
 
    <section class="pane" id="p-cust">
@@ -235,6 +268,49 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
      </div>
     </div>
     <div class="tbl"><table><thead><tr><th></th><th>Code</th><th>Party</th><th>Address</th><th>PIN</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+   </section>
+
+   <section class="pane" id="p-rep">
+    <div class="card">
+     <div class="ch">🔎 Log filter</div>
+     <div class="row" style="margin-bottom:10px"><button class="sec rg" data-rg="today">Today</button><button class="sec rg" data-rg="yest">Yesterday</button><button class="sec rg" data-rg="week">This week</button><button class="sec rg" data-rg="month">This month</button><button class="sec rg" data-rg="all">All</button></div>
+     <div class="form2">
+      <div class="f"><label for="xfrom">From date</label><input type="date" id="xfrom"></div>
+      <div class="f"><label for="xto">To date</label><input type="date" id="xto"></div>
+      <div class="f full"><label for="xcour">Courier (optional)</label><input type="text" id="xcour" list="courlist" placeholder="All couriers"></div>
+     </div>
+     <p class="hint" style="margin:8px 0 0">No dates = today's entries. Applies to everything below.</p>
+    </div>
+    <div class="card">
+     <div class="ch">🧾 Runsheet</div>
+     <div class="form2">
+      <div class="f"><label for="rssort">Sort rows by</label><select id="rssort"><option value="inv">Pck Sl No.</option><option value="name">Party name</option><option value="pin">Pincode</option><option value="date">Date</option></select></div>
+      <div class="f"><label for="rsori">Paper</label><select id="rsori"><option value="P">A4 Portrait</option><option value="L">A4 Landscape</option></select></div>
+     </div>
+     <div class="row" style="margin:10px 0"><label class="chk"><input type="checkbox" id="rsph" checked> Show phone</label></div>
+     <div class="row"><button class="sec" id="rsprev">👁 Preview</button><button class="big" id="rsbtn" style="padding:9px 18px;font-size:13px">🖨 Print</button><button class="sec" id="rsxls">⬇ Runsheet Excel</button></div>
+     <div class="cnote" id="rsmsg" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+     <div class="ch">📈 Reports</div>
+     <p class="hint">Opens in the preview pane with Print / Excel.</p>
+     <div class="rgrid">
+      <button class="sec rp" data-r="dash" style="grid-column:1/-1;background:#dcecf7">📊 Dashboard (KPIs + charts)</button>
+      <button class="sec rp" data-r="courier">🚚 Courier summary</button>
+      <button class="sec rp" data-r="top">🏆 Top 15 parties</button>
+      <button class="sec rp" data-r="party">🏥 Party-wise summary</button>
+      <button class="sec rp" data-r="date">📅 Date-wise summary</button>
+      <button class="sec rp" data-r="matrix">🔢 Courier × Date boxes</button>
+      <button class="sec rp" data-r="dest">📍 Destination-wise</button>
+      <button class="sec rp" data-r="detail">📋 Courier-wise detail</button>
+      <button class="sec rp" data-r="exc">⚠ Exceptions / data check</button>
+     </div>
+    </div>
+    <div class="card">
+     <div class="ch">📊 Export</div>
+     <div class="row"><button id="xlog">⬇ Export sheet log (.xlsx)</button><button class="sec" id="xq">⬇ Export current queue</button></div>
+     <div class="cnote" id="xmsg" style="margin-top:8px"></div>
+    </div>
    </section>
 
    <section class="pane" id="p-new">
@@ -308,7 +384,7 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
 
    <div class="pvwrap">
     <div class="pvbar noprint">
-     <div><b>Preview</b><span class="cnote" id="cnt">0 selected</span></div>
+     <div><b>Preview</b><span class="cnote" id="cnt">0 selected</span><span id="rpbar" style="display:none;margin-left:12px"><button id="rpPrint" style="padding:5px 12px">🖨 Print</button> <button class="sec" id="rpXls" style="padding:5px 12px">⬇ Excel</button> <button class="sec" id="rpCopy" style="padding:5px 12px">📋 Copy</button> <button class="sec" id="rpFs" style="padding:5px 12px">⛶ Full screen</button> <button class="sec" id="rpClose" style="padding:5px 12px">✕ Close report</button></span></div>
      <label class="zoom">Zoom <input type="range" id="pz" min="30" max="100" value="62"></label>
     </div>
     <div id="preview"></div>
@@ -572,7 +648,7 @@ function render(){
    html+=`<div class="page lp${mode=='G'?' land':''}${cls}" style="grid-template-rows:repeat(${rows},1fr);--fs:${fs}">${cells.join('')}</div>`;
   }
  }
- $('preview').innerHTML=html||'<div class="nopv"><div class="eico">🏷️</div><b>Nothing to preview yet</b><span>Upload a dispatch list, add an entry, or tick parties in the Customers tab.</span></div>';
+ if(!CUR)$('preview').innerHTML=html||'<div class="nopv"><div class="eico">🏷️</div><b>Nothing to preview yet</b><span>Upload a dispatch list, add an entry, or tick parties in the Customers tab.</span></div>';
  document.querySelectorAll('.qr[data-q]').forEach(el=>{
   try{const qr=qrcode(0,'M');qr.addData(el.dataset.q.replace(/\n/g,'\r\n'));qr.make();
    el.innerHTML=qr.createSvgTag({cellSize:4,margin:4,scalable:true});}
@@ -607,6 +683,14 @@ function schedSave(q){_pend.set(q,1);clearTimeout(_tm);_tm=setTimeout(()=>{const
 
 /* ===== Export ===== */
 const pD=v=>{const m=String(v||'').match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);return m?new Date(+m[3],+m[2]-1,+m[1]):null};
+/* courier-wise sort: Courier → Date → Pck Sl No (blank courier last) */
+const cmpCour=(a,b)=>{
+ const ca=String(a[6]||'').trim().toUpperCase(),cb=String(b[6]||'').trim().toUpperCase();
+ if(ca!==cb){if(!ca)return 1;if(!cb)return -1;return ca.localeCompare(cb)}
+ const da=pD(a[1]),db=pD(b[1]),ta=da?+da:0,tb=db?+db:0;
+ if(ta!==tb)return ta-tb;
+ return String(a[0]||'').localeCompare(String(b[0]||''),undefined,{numeric:true});
+};
 function dlXlsx(head,rows,name,widths){
  const ws=XLSX.utils.aoa_to_sheet([head].concat(rows));
  ws['!cols']=(widths||head.map(()=>14)).map(w=>({wch:w}));
@@ -625,6 +709,7 @@ $('xlog').onclick=async()=>{
    if((f||t)&&!d)return false;if(f&&d<f)return false;if(t&&d>t)return false;
    if(c&&String(x[6]).toUpperCase()!==c)return false;return true});
   if(!rows.length){m.textContent='No records for this filter.';return}
+  rows.sort(cmpCour);
   dlXlsx(j.head,rows,'Dispatch_Log',[14,12,34,12,14,12,16,18,18,10,9,18,11]);
   m.textContent=`✔ Exported ${rows.length} of ${j.rows.length} record(s).`;
  }catch(e){m.textContent='⚠ Export failed: '+e.message}
@@ -633,7 +718,7 @@ $('xq').onclick=()=>{
  const m=$('xmsg');
  if(!useList||!queue.length){m.textContent='Queue is empty.';return}
  dlXlsx(['Pck Sl No.','Date','Customer Name','Code','Taxable Amt','No. of Boxes','Courier'],
-  queue.map(q=>{const x=logRow(q);return[x.inv,x.date,x.name,x.code,x.amt,x.boxes,x.courier]}),'Dispatch_Queue',[14,12,34,12,14,12,16]);
+  queue.map(q=>{const x=logRow(q);return[x.inv,x.date,x.name,x.code,x.amt,x.boxes,x.courier]}).sort(cmpCour),'Dispatch_Queue',[14,12,34,12,14,12,16]);
  m.textContent=`✔ Exported ${queue.length} row(s).`;
 };
 
@@ -662,6 +747,210 @@ $('print').onclick=async()=>{
  if(bad.length)msgs.push('Missing details:\n  '+bad.slice(0,8).join('\n  ')+(bad.length>8?'\n  …and '+(bad.length-8)+' more':''));
  if(msgs.length&&!confirm(msgs.join('\n\n')+'\n\nPrint anyway?'))return;
  await ensurePins([...sel].map(i=>data[i]));render();if(useList)markPrinted(queue.slice());setTimeout(()=>window.print(),300)};
+/* ===== RUNSHEET & REPORTS (all built from the sheet log) ===== */
+document.body.insertAdjacentHTML('beforeend','<div id="rs"></div>');
+let CUR=null,LOGC=null;
+const num=v=>{const n=parseFloat(String(v||'').replace(/,/g,''));return isNaN(n)?0:n};
+const pad2=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+const dmy=d=>pad2(d.getDate())+'/'+pad2(d.getMonth()+1)+'/'+d.getFullYear();
+const stampNow=()=>{const n=new Date();return dmy(n)+' '+n.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})};
+const groupBy=(a,f)=>{const m=new Map();a.forEach(x=>{const k=f(x);if(!m.has(k))m.set(k,[]);m.get(k).push(x)});return m};
+const sortedCouriers=g=>[...g.keys()].sort((a,b)=>a==='UNASSIGNED'?1:b==='UNASSIGNED'?-1:a.localeCompare(b));
+const sumB=a=>a.reduce((t,r)=>t+r.boxes,0);
+const partyKey=r=>DN(r.code)&&DN(r.code)!=='MANUAL'?DN(r.code):DN(r.name);
+
+function closeViewer(){if(!CUR)return;setFs(false);CUR=null;$('rpbar').style.display='none';render()}
+function fitZoom(){if(!CUR)return;const w=(CUR.ori=='L'?297:210)*3.7795,av=$('preview').clientWidth-40,z=Math.max(.3,Math.min(1.5,av/w));document.documentElement.style.setProperty('--pz',z);$('pz').value=Math.round(z*100)}
+function showViewer(v){CUR=v;$('rpbar').style.display='';$('preview').innerHTML=(v.pages||[v.html]).map(h=>`<div class="page rsprev" style="width:${v.ori=='L'?297:210}mm;min-height:${v.ori=='L'?209:296}mm;height:auto">${h}</div>`).join('');$('preview').scrollTop=0;fitZoom()}
+function setFs(on){$('preview').parentElement.classList.toggle('fs',on);$('rpFs').textContent=on?'⛶ Exit full screen':'⛶ Full screen';fitZoom()}
+function printViewer(){
+ if(!CUR)return;
+ $('rs').innerHTML=CUR.html;
+ $('pg').textContent=`@page{size:A4 ${CUR.ori=='L'?'landscape':'portrait'};margin:10mm}`;
+ document.body.classList.add('rsp');
+ const done=()=>{document.body.classList.remove('rsp');$('rs').innerHTML='';render();window.removeEventListener('afterprint',done)};
+ window.addEventListener('afterprint',done);
+ setTimeout(()=>window.print(),200);
+}
+function dlBook(sheets,name){
+ const wb=XLSX.utils.book_new(),used=new Set();
+ sheets.forEach(s=>{
+  const base=String(s.name||'Sheet').replace(/[\\\/?*\[\]:]/g,' ').trim().slice(0,28)||'Sheet';let k=base,i=2;
+  while(used.has(k.toLowerCase()))k=base+' '+(i++);used.add(k.toLowerCase());
+  const ws=XLSX.utils.aoa_to_sheet(s.aoa||[s.head].concat(s.rows));
+  if(s.merges)ws['!merges']=s.merges;
+  if(s.cols){ws['!cols']=s.cols.map(w=>({wch:w}))}else
+  ws['!cols']=s.head.map((h,c)=>({wch:Math.min(42,s.rows.reduce((m,r)=>Math.max(m,String(r[c]??'').length+2),String(h).length+2))}));
+  XLSX.utils.book_append_sheet(wb,ws,k);
+ });
+ XLSX.writeFile(wb,name+'_'+iso(new Date())+'.xlsx');
+}
+
+/* log → filtered, enriched records */
+function filt(){
+ let f=$('xfrom').value?new Date($('xfrom').value+'T00:00:00'):null,t=$('xto').value?new Date($('xto').value+'T00:00:00'):null;
+ const c=$('xcour').value.trim().toUpperCase(),td=new Date();td.setHours(0,0,0,0);
+ let period;
+ if(!f&&!t){f=t=td;period='Today ('+dmy(td)+')'}
+ else period=(f?dmy(f):'…')+' to '+(t?dmy(t):'…');
+ return{f,t,c,period:period+(c?' · '+c:'')};
+}
+async function getRecs(){
+ const m=$('rsmsg');
+ if(!LOG_URL||LOG_URL.indexOf('PASTE_')===0){m.textContent='⚠ Set LOG_URL first.';return null}
+ let j;
+ if(LOGC&&Date.now()-LOGC.t<20000)j=LOGC.j;
+ else{m.textContent='Fetching log…';
+  try{const r=await fetch(LOG_URL+'?action=list');j=await r.json();if(!j.ok)throw new Error(j.error||'fail');LOGC={t:Date.now(),j}}
+  catch(e){m.textContent='⚠ Could not fetch log: '+e.message;return null}}
+ const F=filt(),recs=[];
+ j.rows.forEach(x=>{
+  const d=pD(x[1]);if(!d)return;
+  if((F.f&&d<F.f)||(F.t&&d>F.t))return;
+  const cr=String(x[6]||'').trim().toUpperCase();
+  if(F.c&&cr!==F.c)return;
+  const bx=parseInt(x[5],10);
+  recs.push({inv:String(x[0]||'').trim(),date:x[1],dt:d,name:String(x[2]||''),code:String(x[3]||''),amt:x[4],boxes:bx>=1?bx:1,badBox:!(bx>=1),courier:cr,cn:cr||'UNASSIGNED'});
+ });
+ if(!recs.length){m.textContent='No log records for '+F.period+'.';return null}
+ const byCode=new Map(),byName=new Map();
+ data.forEach(d=>{const k=DN(d.code);if(k&&k!=='MANUAL'&&!byCode.has(k))byCode.set(k,d);const n=DN(d.name);if(n&&!byName.has(n))byName.set(n,d)});
+ recs.forEach(r=>{const d=byCode.get(DN(r.code))||byName.get(DN(r.name));r.found=!!d;r.d=d||{pin:'',mob:'',ph:'',code:r.code,name:r.name,addr:''}});
+ await ensurePins(recs.map(r=>r.d));
+ m.textContent='';
+ return{recs,period:F.period};
+}
+const dest=r=>{const pc=pinCache[r.d.pin];return{city:pc?pc.city:'',state:pc?pc.state:''}};
+
+/* shared page pieces */
+const hdr=(title,sub)=>`<div class="hd"><div class="co">${esc(FROM.name)}<small>${esc((FROM.addr[FROM.addr.length-1]||'').replace(/[\s,-]*\d{6}\s*$/,''))}</small></div><div class="ti"><b>${esc(title)}</b><span>${sub}</span></div></div>`;
+const cls=c=>c?` class="${c}"`:'';
+function rptHtml(title,period,head,rows,al,foot){
+ return `<div class="rs">${hdr(title.toUpperCase(),'Period: '+esc(period))}<table><thead><tr>${head.map((h,k)=>`<th${cls(al[k])}>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,k)=>`<td${cls(al[k])}>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>${foot?`<tfoot><tr>${foot.map((v,k)=>`<td${cls(al[k])}>${esc(v)}</td>`).join('')}</tr></tfoot>`:''}</table><div class="ft">Generated ${stampNow()} · ${rows.length} row(s)</div></div>`;
+}
+
+/* RUNSHEET */
+function buildRunsheet(recs,period){
+ const sort=$('rssort').value,ori=$('rsori').value,ph=$('rsph').checked;
+ const cmpInv=(a,b)=>a.inv.localeCompare(b.inv,undefined,{numeric:true});
+ const S={inv:cmpInv,name:(a,b)=>a.name.localeCompare(b.name)||cmpInv(a,b),pin:(a,b)=>String(a.d.pin).localeCompare(String(b.d.pin))||a.name.localeCompare(b.name),date:(a,b)=>(a.dt-b.dt)||cmpInv(a,b)}[sort];
+ const W=ori=='L'?[8,30,24,48,14,40,48]:[7,24,22,30,12,26,26];
+ const g=groupBy(recs,r=>r.cn),keys=sortedCouriers(g),now=new Date();
+ const ymd=String(now.getFullYear()).slice(2)+pad2(now.getMonth()+1)+pad2(now.getDate());
+ let html='';const pages=[],flat=[],sum=[];
+ keys.forEach((cn,ci)=>{
+  const rows=g.get(cn).slice().sort(S),tb=sumB(rows);
+  const np=new Set(rows.map(partyKey)).size,npin=new Set(rows.map(r=>r.d.pin).filter(Boolean)).size,rno=ymd+'-'+pad2(ci+1);
+  sum.push([cn,rno,rows.length,tb]);
+  rows.forEach((r,k)=>{const d=dest(r);flat.push([cn,k+1,r.inv,fmtDate(r.date),r.name,r.code,d.city,d.state,r.d.pin||'',r.boxes,'',''])})
+  const trs=rows.map((r,k)=>{const d=dest(r),pc=d.city?`${esc(d.city)}<br><small>${d.state?esc(d.state)+' – ':''}${esc(r.d.pin)}</small>`:esc(r.d.pin)||'—',tel=ph&&(r.d.mob||r.d.ph)?' · '+esc(r.d.mob||r.d.ph):'';
+   return `<tr><td class="c">${k+1}</td><td>${esc(r.inv)||'—'}</td><td>${esc(fmtDate(r.date))}</td><td><b>${esc(r.name)}</b><br><small>${esc(r.code)}${tel}</small></td><td>${pc}</td><td class="c"><b>${r.boxes}</b></td><td></td><td></td></tr>`}).join('');
+  html+=`<div class="rs${ci>0?' pbk':''}">${hdr('DISPATCH RUNSHEET','Run No. '+rno)}
+   <div class="info"><div><label>Courier</label><b>${esc(cn)}</b></div><div><label>Run No.</label><b>${rno}</b></div><div><label>Period</label><b>${esc(period)}</b></div><div><label>Printed</label><b>${stampNow()}</b></div></div>
+   <div class="info"><div><label>Invoices</label><b>${rows.length}</b></div><div><label>Total boxes</label><b>${tb}</b></div><div><label>Parties</label><b>${np}</b></div><div><label>Destinations (PIN)</label><b>${npin}</b></div></div>
+   <div class="info blank"><div><label>Vehicle / AWB no.</label></div><div><label>Executive name</label></div><div><label>Contact no.</label></div><div><label>Pickup time</label></div></div>
+   <div class="sp"></div>
+   <table class="fx"><colgroup><col style="width:${W[0]}mm"><col style="width:${W[1]}mm"><col style="width:${W[2]}mm"><col><col style="width:${W[3]}mm"><col style="width:${W[4]}mm"><col style="width:${W[5]}mm"><col style="width:${W[6]}mm"></colgroup>
+   <thead><tr><th class="c">#</th><th>Pck Sl No.</th><th>Date</th><th>Party</th><th>Destination</th><th class="c">Boxes</th><th>POD No.</th><th>Receiver sign / Remarks</th></tr></thead><tbody>${trs}</tbody>
+   <tfoot><tr><td colspan="5" class="r">TOTAL – ${esc(cn)}</td><td class="c">${tb}</td><td></td><td></td></tr></tfoot></table>
+   <div class="sg"><div>Prepared by</div><div>Checked by (Dispatch)</div><div>Courier executive – name, sign &amp; seal</div></div></div>`;
+  pages.push(html);html='';
+ });
+ const ti=recs.length,tbx=sumB(recs);
+ const sheets=[{name:'Runsheet',head:['Courier','S.No','Pck Sl No.','Date','Party','Code','City','State','PIN','Boxes','POD No.','Remarks'],rows:flat,cols:[14,6,14,12,34,12,16,16,9,8,18,24]}];
+ return{html:pages.join(''),pages,ori,sheets,title:'Runsheet',stat:`✔ ${ti} invoice(s) · ${tbx} box(es) · ${keys.length} courier(s) · ${period}`};
+}
+async function withRs(fn){const R=await getRecs();if(!R)return;const v=buildRunsheet(R.recs,R.period);$('rsmsg').textContent=v.stat;fn(v)}
+$('rsprev').onclick=()=>withRs(showViewer);
+$('rsbtn').onclick=()=>withRs(v=>{showViewer(v);printViewer()});
+$('rsxls').onclick=()=>withRs(v=>dlBook(v.sheets,'Runsheet'));
+
+/* REPORTS */
+async function runReport(kind){
+ const R=await getRecs();if(!R)return;
+ const{recs,period}=R;let title,head,rows,al,foot,custom=null,ori='P';
+ switch(kind){
+ case 'courier':{title='Courier-wise Summary';const g=groupBy(recs,r=>r.cn);
+  rows=sortedCouriers(g).map(k=>{const a=g.get(k);return[k,a.length,new Set(a.map(partyKey)).size,sumB(a)]});
+  rows.forEach(r=>r.push((r[3]/r[1]).toFixed(1)));
+  head=['Courier','Invoices','Parties','Boxes','Boxes / invoice'];al=['','r','r','r','r'];foot=['Total',recs.length,new Set(recs.map(partyKey)).size,sumB(recs),(sumB(recs)/recs.length).toFixed(1)];break}
+ case 'top':{title='Top 15 Parties (by boxes)';const g=groupBy(recs,partyKey),tb=sumB(recs);
+  rows=[...g.values()].map(a=>{const d=a[0].d,pc=pinCache[d.pin];return[a[0].name,a[0].code,pc?pc.city:'',a.length,sumB(a)]}).sort((x,y)=>y[4]-x[4]||x[0].localeCompare(y[0])).slice(0,15).map((r,i)=>[i+1,...r,(r[4]/tb*100).toFixed(1)+'%']);
+  head=['#','Party','Code','City','Invoices','Boxes','Share'];al=['c','','','','r','r','r'];foot=null;break}
+ case 'dash':{title='Dispatch Dashboard';
+  const gc=groupBy(recs,r=>r.cn),kc=sortedCouriers(gc),gd=groupBy(recs,r=>iso(r.dt)),kd=[...gd.keys()].sort();
+  const np=new Set(recs.map(partyKey)).size,tb=sumB(recs),npin=new Set(recs.map(r=>r.d.pin).filter(Boolean)).size;
+  const cour=kc.map(k=>[k,sumB(gc.get(k))]),days=kd.map(k=>[dmy(gd.get(k)[0].dt),sumB(gd.get(k))]);
+  const busiest=days.slice().sort((a,b)=>b[1]-a[1])[0],topc=cour.slice().sort((a,b)=>b[1]-a[1])[0];
+  const bars=arr=>{const mx=Math.max(...arr.map(x=>x[1]),1);return arr.map(([l,v])=>`<div class="bar"><span class="l">${esc(l)}</span><span class="t"><i style="width:${(v/mx*100).toFixed(1)}%"></i></span><b>${v}</b></div>`).join('')};
+  const tile=(l,v)=>`<div><label>${l}</label><b>${esc(v)}</b></div>`;
+  custom=`<div class="rs">${hdr('DISPATCH DASHBOARD','Period: '+esc(period))}<div class="info">${tile('Invoices',recs.length)}${tile('Total boxes',tb)}${tile('Parties',np)}${tile('Couriers',kc.length)}</div><div class="info">${tile('Boxes / invoice',(tb/recs.length).toFixed(1))}${tile('Busiest day',busiest?busiest[0]+' ('+busiest[1]+')':'')}${tile('Top courier',topc?topc[0]+' ('+topc[1]+')':'')}${tile('Destinations (PIN)',npin)}</div><h4>Boxes by courier</h4>${bars(cour)}<h4>Boxes by day${days.length>31?' (last 31 days)':''}</h4>${bars(days.slice(-31))}<div class="ft">Generated ${stampNow()}</div></div>`;
+  head=['Section','Item','Boxes'];rows=[['Total','Invoices',recs.length],['Total','Boxes',tb],['Total','Parties',np]].concat(cour.map(x=>['Courier',...x]),days.map(x=>['Day',...x]));al=[];foot=null;break}
+ case 'party':{title='Party-wise Summary';const g=groupBy(recs,partyKey);
+  rows=[...g.values()].map(a=>{const d=a[0].d,pc=pinCache[d.pin];return[a[0].name,a[0].code,pc?pc.city:'',d.pin||'',a.length,sumB(a),[...new Set(a.map(r=>r.cn))].join(', ')]}).sort((x,y)=>y[5]-x[5]||x[0].localeCompare(y[0]));
+  head=['Party','Code','City','PIN','Invoices','Boxes','Couriers'];al=['','','','','r','r',''];foot=['Total ('+rows.length+' parties)','','','',recs.length,sumB(recs),''];break}
+ case 'date':{title='Date-wise Summary';const g=groupBy(recs,r=>iso(r.dt));
+  rows=[...g.keys()].sort().map(k=>{const a=g.get(k);return[dmy(a[0].dt),a.length,sumB(a),[...new Set(a.map(r=>r.cn))].sort().join(', ')]});
+  head=['Date','Invoices','Boxes','Couriers'];al=['','r','r',''];foot=['Total',recs.length,sumB(recs),''];break}
+ case 'matrix':{title='Courier x Date (boxes)';const ds=[...new Set(recs.map(r=>iso(r.dt)))].sort(),g=groupBy(recs,r=>r.cn);
+  rows=sortedCouriers(g).map(k=>{const a=g.get(k);return[k,...ds.map(d=>sumB(a.filter(r=>iso(r.dt)===d))||''),sumB(a)]});
+  head=['Courier',...ds.map(d=>dmy(new Date(d+'T00:00:00')).slice(0,5)),'Total'];al=head.map((h,i)=>i?'c':'');
+  foot=['Total',...ds.map(d=>sumB(recs.filter(r=>iso(r.dt)===d))),sumB(recs)];ori=ds.length>8?'L':'P';break}
+ case 'dest':{title='Destination-wise Summary';
+  const g=groupBy(recs,r=>{const d=dest(r);return(d.state||'UNKNOWN')+'|'+(d.city||'UNKNOWN')});
+  rows=[...g.keys()].sort().map(k=>{const a=g.get(k),[st,ct]=k.split('|');return[st,ct,new Set(a.map(r=>r.d.pin).filter(Boolean)).size,a.length,sumB(a)]});
+  head=['State','City / District','PINs','Invoices','Boxes'];al=['','','r','r','r'];foot=['Total','','',recs.length,sumB(recs)];break}
+ case 'detail':{title='Courier-wise Detail';
+  rows=recs.slice().sort((a,b)=>(a.cn==='UNASSIGNED')-(b.cn==='UNASSIGNED')||a.cn.localeCompare(b.cn)||(a.dt-b.dt)||a.inv.localeCompare(b.inv,undefined,{numeric:true}))
+   .map(r=>{const d=dest(r);return[r.cn,r.inv,fmtDate(r.date),r.name,r.code,[d.city,r.d.pin].filter(Boolean).join(' – '),r.boxes]});
+  head=['Courier','Pck Sl No.','Date','Party','Code','Destination','Boxes'];al=['','','','','','','c'];foot=['Total','','','','','',sumB(recs)];break}
+ case 'exc':{title='Exceptions & Data Check';
+  const seen=new Map();recs.forEach(r=>{const k=DN(r.inv);if(k)seen.set(k,(seen.get(k)||0)+1)});
+  rows=[];const add=(i,r,dt)=>rows.push([i,r.inv||'—',fmtDate(r.date),r.name,r.cn,dt||'']);
+  recs.forEach(r=>{
+   if(!r.courier)add('Courier missing',r);
+   if(!r.inv)add('Pck Sl No. missing',r);else if(seen.get(DN(r.inv))>1)add('Duplicate Pck Sl No.',r,seen.get(DN(r.inv))+' entries');
+   if(r.badBox)add('Box count missing / invalid',r,'counted as 1');
+   if(!r.found)add('Party not in customer master',r,r.code);else issues(r.d).forEach(x=>add('Party data: '+x,r));
+  });
+  rows.sort((a,b)=>a[0].localeCompare(b[0])||a[1].localeCompare(b[1],undefined,{numeric:true}));
+  if(!rows.length)rows=[['No exceptions found ✔','','','','','']];
+  head=['Issue','Pck Sl No.','Date','Party','Courier','Detail'];al=['','','','','',''];foot=null;break}
+ }
+ showViewer({html:custom||rptHtml(title,period,head,rows,al,foot),ori,sheets:[{name:title,head,rows:foot?rows.concat([foot]):rows}],title});
+ $('rsmsg').textContent='✔ '+title+' · '+recs.length+' invoice(s) · '+period;
+}
+document.querySelectorAll('.rp').forEach(b=>b.onclick=()=>runReport(b.dataset.r));
+$('rpPrint').onclick=printViewer;
+$('rpXls').onclick=()=>{if(CUR)dlBook(CUR.sheets,CUR.title.replace(/\W+/g,'_'))};
+$('rpClose').onclick=closeViewer;
+$('rpCopy').onclick=()=>{
+ if(!CUR)return;const s0=CUR.sheets[0],t=[s0.head].concat(s0.rows).map(r=>r.join('\t')).join('\n');
+ const ok=()=>{$('rsmsg').textContent='✔ Copied – paste into Excel / WhatsApp / email'};
+ const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();
+ let done=false;try{done=document.execCommand('copy')}catch(e){}a.remove();
+ if(done)ok();else if(navigator.clipboard)navigator.clipboard.writeText(t).then(ok,()=>{$('rsmsg').textContent='⚠ Copy blocked by browser'});
+};
+$('rpFs').onclick=()=>setFs(!$('preview').parentElement.classList.contains('fs'));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('preview').parentElement.classList.contains('fs'))setFs(false)});
+window.addEventListener('resize',fitZoom);
+document.querySelectorAll('.rg').forEach(b=>b.onclick=()=>{
+ const t=new Date(),k=b.dataset.rg;let f=new Date(t),e=new Date(t);
+ if(k=='yest'){f.setDate(f.getDate()-1);e=new Date(f)}
+ else if(k=='week'){f.setDate(t.getDate()-((t.getDay()+6)%7))}
+ else if(k=='month')f=new Date(t.getFullYear(),t.getMonth(),1);
+ else if(k=='all')f=new Date(2020,0,1);
+ $('xfrom').value=iso(f);$('xto').value=iso(e);
+});
+/* remember runsheet options */
+const RSI=['rssort','rsori','rsph'];
+try{const o=JSON.parse(localStorage.getItem('ap_rs')||'{}');RSI.forEach(id=>{if(o[id]!==undefined){$(id).type=='checkbox'?$(id).checked=o[id]:$(id).value=o[id]}})}catch(e){}
+RSI.forEach(id=>$(id).addEventListener('change',()=>{try{const o={};RSI.forEach(i=>o[i]=$(i).type=='checkbox'?$(i).checked:$(i).value);localStorage.setItem('ap_rs',JSON.stringify(o))}catch(e){}}));
+/* leaving the report view: label settings / Print / other tabs bring the labels back */
+['click','input','change'].forEach(ev=>document.querySelector('.settings').addEventListener(ev,()=>{if(CUR)closeViewer()},true));
+$('print').addEventListener('click',()=>{if(CUR)closeViewer()},true);
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{const r=b.dataset.t==='p-rep';document.body.classList.toggle('repmode',r);if(!r)closeViewer();else setTimeout(fitZoom,50)}));
 /* UI: tabs, zoom, Enter-to-add */
 document.querySelectorAll('.tcard').forEach(b=>b.onclick=()=>{$('mode').value=b.dataset.v;render()});
 const dz=$('drop');
