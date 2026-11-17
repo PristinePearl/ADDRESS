@@ -155,6 +155,11 @@ summary{cursor:pointer;font-weight:600;color:var(--pri);font-size:13px}
 .ep .toE .n{font-weight:700;font-size:1.12em;margin:1mm 0 1.5mm}
 .ep .toE .p{font-weight:700;margin-top:1.5mm;font-size:.8em}
 .ep .qrw{position:absolute;right:8mm;bottom:6mm;width:30mm}.ep .cap{font-size:7pt}
+#busy{position:fixed;inset:0;z-index:100;background:rgba(6,47,72,.45);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:#fff;font-weight:600;backdrop-filter:blur(2px)}
+#busy.on{display:flex}
+#busy .sp{width:54px;height:54px;border-radius:50%;border:5px solid #ffffff44;border-top-color:#fff;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media print{#busy{display:none!important}}
 #rs{display:none}
 .rs{font-family:Segoe UI,Arial,sans-serif;color:#111;font-size:9.5pt;line-height:1.3}
 .rs .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:8mm;padding-bottom:3mm;border-bottom:2.5px solid #0b5c8a;margin-bottom:3.5mm}
@@ -212,6 +217,7 @@ body.repmode .ws{grid-template-columns:minmax(380px,420px) 1fr}
 <style id="pg"></style>
 </head>
 <body>
+<div id="busy" class="noprint"><div class="sp"></div><div id="busytx">Loading…</div></div>
 <div class="app">
  <header class="top noprint">
   <div class="brand"><div class="logo"><img src="https://pristinepearl.github.io/Home/alt-logo.png" alt="Pristine Pearl" onerror="this.replaceWith(document.createTextNode('📮'))"></div><div><h1>Address Printer</h1><p>Labels, Glass With Care stickers &amp; envelopes</p></div></div>
@@ -313,6 +319,7 @@ body.repmode .ws{grid-template-columns:minmax(380px,420px) 1fr}
      <div class="msg" id="podmsg" style="margin-top:10px"></div>
      <div class="form2" style="margin-top:10px">
       <div class="f"><label for="podflt">View</label><select id="podflt"><option value="has">POD received</option><option value="pend">POD pending</option><option value="all">All entries</option></select></div>
+      <div class="f"><label for="podgrp">Group by</label><select id="podgrp"><option value="none">No grouping</option><option value="state">State-wise</option><option value="city">City-wise (State → City)</option></select></div>
       <div class="f" style="align-self:end"><button class="sec" id="podview" style="width:100%">👁 View POD data</button></div>
      </div>
      <p class="hint" style="margin:8px 0 0">Uses the Log filter dates above (blank = today).</p>
@@ -415,6 +422,9 @@ const FROM={
 };
 let data=[], sel=new Set(), shown=[], queue=[], useList=false, skipEnt=false;
 const $=id=>document.getElementById(id);
+let _busyN=0;
+function busy(t){_busyN++;$('busytx').textContent=t||'Loading…';$('busy').classList.add('on')}
+function unbusy(){_busyN=Math.max(0,_busyN-1);if(!_busyN)$('busy').classList.remove('on')}
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function parseCSV(t){
@@ -522,10 +532,12 @@ function ingestDispatch(rows){
 }
 $('dfile').onchange=async e=>{
  const f=e.target.files[0];if(!f)return;
+ busy('Reading dispatch list…');
  try{
   if(/\.csv$/i.test(f.name))ingestDispatch(parseCSV(await f.text()));
   else{const wb=XLSX.read(await f.arrayBuffer());ingestDispatch(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}))}
  }catch(err){$('upmsg').textContent='⚠ Could not read file: '+err.message}
+ unbusy();
  e.target.value='';
 };
 $('dclr').onclick=()=>{queue=[];useList=false;sel.clear();$('onlySel').checked=false;$('upmsg').textContent='List cleared.';renderTable();render()};
@@ -686,7 +698,8 @@ async function postLog(body){
 function saveLog(qs,src){
  const rows=qs.filter(q=>data[q.i]).map(logRow);
  if(!rows.length)return;
- postLog({action:'save',source:src,rows}).then(j=>{if(j&&src==='Upload'){const m=$('upmsg');m.textContent+=`\n☁ Saved to sheet: ${j.added} new · ${j.updated} updated`}});
+ if(src==='Upload')busy('Saving to sheet…');
+ postLog({action:'save',source:src,rows}).then(j=>{if(src==='Upload')unbusy();if(j&&src==='Upload'){const m=$('upmsg');m.textContent+=`\n☁ Saved to sheet: ${j.added} new · ${j.updated} updated`}});
 }
 function markPrinted(qs){postLog({action:'printed',rows:qs.filter(q=>data[q.i]).map(logRow)})}
 const _pend=new Map();let _tm=null;
@@ -807,7 +820,8 @@ function filt(){
  else period=(f?dmy(f):'…')+' to '+(t?dmy(t):'…');
  return{f,t,c,period:period+(c?' · '+c:'')};
 }
-async function getRecs(){
+async function getRecs(){busy('Fetching dispatch log…');try{return await getRecs0()}finally{unbusy()}}
+async function getRecs0(){
  const m=$('rsmsg');
  if(!LOG_URL||LOG_URL.indexOf('PASTE_')===0){m.textContent='⚠ Set LOG_URL first.';return null}
  let j;
@@ -838,7 +852,7 @@ const dest=r=>{const pc=pinCache[r.d.pin];return{city:pc?pc.city:'',state:pc?pc.
 const hdr=(title,sub)=>`<div class="hd"><div class="co">${esc(FROM.name)}<small>${esc((FROM.addr[FROM.addr.length-1]||'').replace(/[\s,-]*\d{6}\s*$/,''))}</small></div><div class="ti"><b>${esc(title)}</b><span>${sub}</span></div></div>`;
 const cls=c=>c?` class="${c}"`:'';
 function rptHtml(title,period,head,rows,al,foot){
- return `<div class="rs">${hdr(title.toUpperCase(),'Period: '+esc(period))}<table><thead><tr>${head.map((h,k)=>`<th${cls(al[k])}>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,k)=>`<td${cls(al[k])}>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>${foot?`<tfoot><tr>${foot.map((v,k)=>`<td${cls(al[k])}>${esc(v)}</td>`).join('')}</tr></tfoot>`:''}</table><div class="ft">Generated ${stampNow()} · ${rows.length} row(s)</div></div>`;
+ return `<div class="rs">${hdr(title.toUpperCase(),'Period: '+esc(period))}<table><thead><tr>${head.map((h,k)=>`<th${cls(al[k])}>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>Array.isArray(r)?`<tr>${r.map((v,k)=>`<td${cls(al[k])}>${esc(v)}</td>`).join('')}</tr>`:`<tr><td colspan="${head.length}" style="background:#d6e6f2;font-weight:700">${esc(r.grp)}</td></tr>`).join('')}</tbody>${foot?`<tfoot><tr>${foot.map((v,k)=>`<td${cls(al[k])}>${esc(v)}</td>`).join('')}</tr></tfoot>`:''}</table><div class="ft">Generated ${stampNow()} · ${rows.filter(Array.isArray).length} row(s)</div></div>`;
 }
 
 /* RUNSHEET */
@@ -880,7 +894,7 @@ $('rsxls').onclick=()=>withRs(v=>dlBook(v.sheets,'Runsheet'));
 /* REPORTS */
 async function runReport(kind){
  const R=await getRecs();if(!R)return;
- const{recs,period}=R;let title,head,rows,al,foot,custom=null,ori='P';
+ const{recs,period}=R;let title,head,rows,al,foot,custom=null,ori='P',xrows=null;
  switch(kind){
  case 'courier':{title='Courier-wise Summary';const g=groupBy(recs,r=>r.cn);
   rows=sortedCouriers(g).map(k=>{const a=g.get(k);return[k,a.length,new Set(a.map(partyKey)).size,sumB(a)]});
@@ -916,11 +930,19 @@ async function runReport(kind){
   rows=recs.slice().sort((a,b)=>(a.cn==='UNASSIGNED')-(b.cn==='UNASSIGNED')||a.cn.localeCompare(b.cn)||(a.dt-b.dt)||a.inv.localeCompare(b.inv,undefined,{numeric:true}))
    .map(r=>{const d=dest(r);return[r.cn,r.inv,fmtDate(r.date),r.name,r.code,[d.city,r.d.pin].filter(Boolean).join(' – '),r.boxes]});
   head=['Courier','Pck Sl No.','Date','Party','Code','Destination','Boxes'];al=['','','','','','','c'];foot=['Total','','','','','',sumB(recs)];break}
- case 'pod':{const fl=$('podflt').value;title=fl=='has'?'POD Received':fl=='pend'?'POD Pending':'POD Status';
-  const rs=recs.filter(r=>fl=='all'||(fl=='has')===!!(r.pod||r.rem)).sort((a,b)=>a.cn.localeCompare(b.cn)||(a.dt-b.dt)||a.inv.localeCompare(b.inv,undefined,{numeric:true}));
-  rows=rs.map(r=>[r.cn,r.inv,fmtDate(r.date),r.name,r.boxes,r.pod||'—',r.rem,r.podAt]);
-  if(!rows.length)rows=[['No records','','','','','','','']];
-  head=['Courier','Pck Sl No.','Date','Party','Boxes','POD No.','Remarks','POD updated'];al=['','','','','c','','',''];foot=['Total ('+rs.length+')','','','',sumB(rs),'','',''];ori='L';break}
+ case 'pod':{const fl=$('podflt').value,gp=$('podgrp').value;title=(fl=='has'?'POD Received':fl=='pend'?'POD Pending':'POD Status')+(gp=='state'?' - State-wise':gp=='city'?' - City-wise':'');
+  const has=r=>!!(r.pod||r.rem),U=v=>v||'UNKNOWN';
+  const rs=recs.filter(r=>fl=='all'||(fl=='has')===has(r)).sort((a,b)=>{const da=dest(a),db=dest(b);return(gp=='none'?0:U(da.state).localeCompare(U(db.state))||(gp=='city'?U(da.city).localeCompare(U(db.city)):0))||a.cn.localeCompare(b.cn)||(a.dt-b.dt)||a.inv.localeCompare(b.inv,undefined,{numeric:true})});
+  const line=r=>{const d=dest(r);return[r.cn,r.inv,fmtDate(r.date),r.name,d.city,d.state,r.boxes,r.pod||'—',r.rem,r.podAt]};
+  head=['Courier','Pck Sl No.','Date','Party','City','State','Boxes','POD No.','Remarks','POD updated'];al=['','','','','','','c','','',''];ori='L';
+  xrows=rs.map(line).concat([['Total ('+rs.length+')','','','','','',sumB(rs),'','','']]);
+  if(gp=='none')rows=rs.map(line);
+  else{rows=[];const g=groupBy(rs,r=>{const d=dest(r);return gp=='state'?U(d.state):U(d.state)+'|'+U(d.city)});
+   [...g.keys()].forEach(k=>{const a=g.get(k),pr=a.filter(has).length,lab=gp=='state'?k:k.split('|')[1]+', '+k.split('|')[0];
+    rows.push({grp:`${lab}  —  ${a.length} invoice(s) · ${sumB(a)} box(es) · POD received ${pr} · pending ${a.length-pr}`});
+    a.forEach(r=>rows.push(line(r)))})}
+  if(!rs.length){rows=[['No records','','','','','','','','','']];xrows=rows}
+  foot=['Total ('+rs.length+')','','','','','',sumB(rs),'','',''];break}
  case 'exc':{title='Exceptions & Data Check';
   const seen=new Map();recs.forEach(r=>{const k=DN(r.inv);if(k)seen.set(k,(seen.get(k)||0)+1)});
   rows=[];const add=(i,r,dt)=>rows.push([i,r.inv||'—',fmtDate(r.date),r.name,r.cn,dt||'']);
@@ -934,7 +956,7 @@ async function runReport(kind){
   if(!rows.length)rows=[['No exceptions found ✔','','','','','']];
   head=['Issue','Pck Sl No.','Date','Party','Courier','Detail'];al=['','','','','',''];foot=null;break}
  }
- showViewer({html:custom||rptHtml(title,period,head,rows,al,foot),ori,sheets:[{name:title,head,rows:foot?rows.concat([foot]):rows}],title});
+ showViewer({html:custom||rptHtml(title,period,head,rows,al,foot),ori,sheets:[{name:title,head,rows:xrows||(foot?rows.concat([foot]):rows)}],title});
  $('rsmsg').textContent='✔ '+title+' · '+recs.length+' invoice(s) · '+period;
 }
 document.querySelectorAll('.rp').forEach(b=>b.onclick=()=>runReport(b.dataset.r));
@@ -957,6 +979,7 @@ function parsePod(rows){
 }
 $('podfile').onchange=async e=>{
  const f=e.target.files[0];if(!f)return;const m=$('podmsg');
+ busy('Importing POD data…');
  try{
   let rows=[];
   if(/\.csv$/i.test(f.name))rows=parseCSV(await f.text());
@@ -971,6 +994,7 @@ $('podfile').onchange=async e=>{
   if(j.notfound&&j.notfound.length)t+=`\n❌ ${j.notfound.length} not found in log: ${j.notfound.slice(0,15).join(', ')}${j.notfound.length>15?' …':''}`;
   m.textContent=t;
  }catch(err){m.textContent='⚠ Could not read file: '+err.message}
+ finally{unbusy()}
  e.target.value='';
 };
 const pdz=$('poddrop');
