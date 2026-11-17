@@ -307,6 +307,17 @@ body.repmode .ws{grid-template-columns:minmax(380px,420px) 1fr}
      </div>
     </div>
     <div class="card">
+     <div class="ch">📮 POD tracking</div>
+     <p class="hint">Fill <b>POD No.</b> &amp; <b>Remarks</b> in the downloaded runsheet Excel, then import it here. Matched by Pck Sl No.</p>
+     <label class="drop" id="poddrop" style="padding:12px"><b>Import POD (.xlsx / .csv)</b><span>click or drop the filled runsheet</span><input type="file" id="podfile" accept=".xlsx,.xls,.csv" hidden></label>
+     <div class="msg" id="podmsg" style="margin-top:10px"></div>
+     <div class="form2" style="margin-top:10px">
+      <div class="f"><label for="podflt">View</label><select id="podflt"><option value="has">POD received</option><option value="pend">POD pending</option><option value="all">All entries</option></select></div>
+      <div class="f" style="align-self:end"><button class="sec" id="podview" style="width:100%">👁 View POD data</button></div>
+     </div>
+     <p class="hint" style="margin:8px 0 0">Uses the Log filter dates above (blank = today).</p>
+    </div>
+    <div class="card">
      <div class="ch">📊 Export</div>
      <div class="row"><button id="xlog">⬇ Export sheet log (.xlsx)</button><button class="sec" id="xq">⬇ Export current queue</button></div>
      <div class="cnote" id="xmsg" style="margin-top:8px"></div>
@@ -811,7 +822,7 @@ async function getRecs(){
   const cr=String(x[6]||'').trim().toUpperCase();
   if(F.c&&cr!==F.c)return;
   const bx=parseInt(x[5],10);
-  recs.push({inv:String(x[0]||'').trim(),date:x[1],dt:d,name:String(x[2]||''),code:String(x[3]||''),amt:x[4],boxes:bx>=1?bx:1,badBox:!(bx>=1),courier:cr,cn:cr||'UNASSIGNED'});
+  recs.push({inv:String(x[0]||'').trim(),date:x[1],dt:d,name:String(x[2]||''),code:String(x[3]||''),amt:x[4],boxes:bx>=1?bx:1,badBox:!(bx>=1),courier:cr,cn:cr||'UNASSIGNED',pod:String(x[13]??'').trim(),rem:String(x[14]??'').trim(),podAt:String(x[15]??'').trim()});
  });
  if(!recs.length){m.textContent='No log records for '+F.period+'.';return null}
  const byCode=new Map(),byName=new Map();
@@ -843,9 +854,9 @@ function buildRunsheet(recs,period){
   const rows=g.get(cn).slice().sort(S),tb=sumB(rows);
   const np=new Set(rows.map(partyKey)).size,npin=new Set(rows.map(r=>r.d.pin).filter(Boolean)).size,rno=ymd+'-'+pad2(ci+1);
   sum.push([cn,rno,rows.length,tb]);
-  rows.forEach((r,k)=>{const d=dest(r);flat.push([cn,k+1,r.inv,fmtDate(r.date),r.name,r.code,d.city,d.state,r.d.pin||'',r.boxes,'',''])})
+  rows.forEach((r,k)=>{const d=dest(r);flat.push([cn,k+1,r.inv,fmtDate(r.date),r.name,r.code,d.city,d.state,r.d.pin||'',r.boxes,r.pod||'',r.rem||''])})
   const trs=rows.map((r,k)=>{const d=dest(r),pc=d.city?`${esc(d.city)}<br><small>${d.state?esc(d.state)+' – ':''}${esc(r.d.pin)}</small>`:esc(r.d.pin)||'—',tel=ph&&(r.d.mob||r.d.ph)?' · '+esc(r.d.mob||r.d.ph):'';
-   return `<tr><td class="c">${k+1}</td><td>${esc(r.inv)||'—'}</td><td>${esc(fmtDate(r.date))}</td><td><b>${esc(r.name)}</b><br><small>${esc(r.code)}${tel}</small></td><td>${pc}</td><td class="c"><b>${r.boxes}</b></td><td></td><td></td></tr>`}).join('');
+   return `<tr><td class="c">${k+1}</td><td>${esc(r.inv)||'—'}</td><td>${esc(fmtDate(r.date))}</td><td><b>${esc(r.name)}</b><br><small>${esc(r.code)}${tel}</small></td><td>${pc}</td><td class="c"><b>${r.boxes}</b></td><td>${esc(r.pod)}</td><td>${esc(r.rem)}</td></tr>`}).join('');
   html+=`<div class="rs${ci>0?' pbk':''}">${hdr('DISPATCH RUNSHEET','Run No. '+rno)}
    <div class="info"><div><label>Courier</label><b>${esc(cn)}</b></div><div><label>Run No.</label><b>${rno}</b></div><div><label>Period</label><b>${esc(period)}</b></div><div><label>Printed</label><b>${stampNow()}</b></div></div>
    <div class="info"><div><label>Invoices</label><b>${rows.length}</b></div><div><label>Total boxes</label><b>${tb}</b></div><div><label>Parties</label><b>${np}</b></div><div><label>Destinations (PIN)</label><b>${npin}</b></div></div>
@@ -905,6 +916,11 @@ async function runReport(kind){
   rows=recs.slice().sort((a,b)=>(a.cn==='UNASSIGNED')-(b.cn==='UNASSIGNED')||a.cn.localeCompare(b.cn)||(a.dt-b.dt)||a.inv.localeCompare(b.inv,undefined,{numeric:true}))
    .map(r=>{const d=dest(r);return[r.cn,r.inv,fmtDate(r.date),r.name,r.code,[d.city,r.d.pin].filter(Boolean).join(' – '),r.boxes]});
   head=['Courier','Pck Sl No.','Date','Party','Code','Destination','Boxes'];al=['','','','','','','c'];foot=['Total','','','','','',sumB(recs)];break}
+ case 'pod':{const fl=$('podflt').value;title=fl=='has'?'POD Received':fl=='pend'?'POD Pending':'POD Status';
+  const rs=recs.filter(r=>fl=='all'||(fl=='has')===!!(r.pod||r.rem)).sort((a,b)=>a.cn.localeCompare(b.cn)||(a.dt-b.dt)||a.inv.localeCompare(b.inv,undefined,{numeric:true}));
+  rows=rs.map(r=>[r.cn,r.inv,fmtDate(r.date),r.name,r.boxes,r.pod||'—',r.rem,r.podAt]);
+  if(!rows.length)rows=[['No records','','','','','','','']];
+  head=['Courier','Pck Sl No.','Date','Party','Boxes','POD No.','Remarks','POD updated'];al=['','','','','c','','',''];foot=['Total ('+rs.length+')','','','',sumB(rs),'','',''];ori='L';break}
  case 'exc':{title='Exceptions & Data Check';
   const seen=new Map();recs.forEach(r=>{const k=DN(r.inv);if(k)seen.set(k,(seen.get(k)||0)+1)});
   rows=[];const add=(i,r,dt)=>rows.push([i,r.inv||'—',fmtDate(r.date),r.name,r.cn,dt||'']);
@@ -922,6 +938,45 @@ async function runReport(kind){
  $('rsmsg').textContent='✔ '+title+' · '+recs.length+' invoice(s) · '+period;
 }
 document.querySelectorAll('.rp').forEach(b=>b.onclick=()=>runReport(b.dataset.r));
+$('podview').onclick=()=>runReport('pod');
+const PAL={inv:['PCKSLNO','PACKSLNO','INVNO','INVOICENO'],pod:['PODNO','POD','PODNUMBER'],rem:['REMARKS','REMARK']};
+function parsePod(rows){
+ const m=$('podmsg');let hr=-1,H=[];
+ for(let r=0;r<Math.min(rows.length,15);r++){const h=(rows[r]||[]).map(DN);if(h.some(x=>PAL.inv.includes(x))&&h.some(x=>PAL.pod.includes(x))){hr=r;H=h;break}}
+ if(hr<0){m.textContent='⚠ Header not found. Need columns "Pck Sl No." and "POD No." (use the runsheet Excel).';return null}
+ const col=k=>H.findIndex(x=>PAL[k].includes(x)),ci=col('inv'),cp=col('pod'),cr=col('rem');
+ const out=[];let noinv=0;
+ rows.slice(hr+1).forEach(r=>{
+  const inv=String(r[ci]??'').trim(),pod=String(r[cp]??'').trim(),rem=cr<0?'':String(r[cr]??'').trim();
+  if(!pod&&!rem)return;
+  if(!inv){noinv++;return}
+  out.push({inv,pod,rem});
+ });
+ if(!out.length){m.textContent='⚠ No POD / remarks filled in the file.'+(noinv?` (${noinv} row(s) without Pck Sl No. skipped)`:'');return null}
+ return{rows:out,noinv};
+}
+$('podfile').onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;const m=$('podmsg');
+ try{
+  let rows=[];
+  if(/\.csv$/i.test(f.name))rows=parseCSV(await f.text());
+  else{const wb=XLSX.read(await f.arrayBuffer());wb.SheetNames.forEach(n=>{rows=rows.concat(XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}))})}
+  const R=parsePod(rows);if(!R)return;
+  m.textContent=`Saving ${R.rows.length} POD entr${R.rows.length==1?'y':'ies'}…`;
+  const j=await postLog({action:'pod',rows:R.rows});
+  if(!j){m.textContent='✖ Could not save (check LOG_URL / redeploy the updated Apps Script).';return}
+  LOGC=null;
+  let t=`✔ POD saved: ${j.updated} updated`;
+  if(R.noinv)t+=`\n⚠ ${R.noinv} row(s) without Pck Sl No. skipped`;
+  if(j.notfound&&j.notfound.length)t+=`\n❌ ${j.notfound.length} not found in log: ${j.notfound.slice(0,15).join(', ')}${j.notfound.length>15?' …':''}`;
+  m.textContent=t;
+ }catch(err){m.textContent='⚠ Could not read file: '+err.message}
+ e.target.value='';
+};
+const pdz=$('poddrop');
+['dragenter','dragover'].forEach(ev=>pdz.addEventListener(ev,e=>{e.preventDefault();pdz.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>pdz.addEventListener(ev,e=>{e.preventDefault();pdz.classList.remove('over')}));
+pdz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(!f)return;const dt=new DataTransfer();dt.items.add(f);$('podfile').files=dt.files;$('podfile').onchange({target:$('podfile')})});
 $('rpPrint').onclick=printViewer;
 $('rpXls').onclick=()=>{if(CUR)dlBook(CUR.sheets,CUR.title.replace(/\W+/g,'_'))};
 $('rpClose').onclick=closeViewer;
